@@ -7,6 +7,7 @@ namespace dragonrescue.Schema;
 public class AvatarData
 {
 	[XmlElement(ElementName = "IsSuggestedAvatarName", IsNullable = true)]
+	public bool? IsSuggestedAvatarName;
 
 	public int? Id;
 
