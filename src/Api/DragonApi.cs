@@ -95,4 +95,19 @@ public static class DragonApi {
         
         return res;
     }
+    
+    
+    public static async Task<string> GetAllActivePetsByuserId(HttpClient client, string apiToken, string userId) {
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("userId", userId),
+            new KeyValuePair<string, string>("active", "True"),
+        });
+
+        var response = await client.PostAsync(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetAllActivePetsByuserId", formContent);
+        var bodyRaw = await response.Content.ReadAsStringAsync();
+        return bodyRaw;
+        //return XmlUtil.DeserializeXml<RaisedPetData[]>(bodyRaw);
+    }
 }

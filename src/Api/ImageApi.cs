@@ -23,4 +23,18 @@ public static class ImageApi {
         response.Dispose();
         return bodyRaw;
     }
+    
+    public static async Task<string> GetImageData(HttpClient client, string apiToken, int imageSlot) {
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("ImageType", "EggColor"),
+            new KeyValuePair<string, string>("ImageSlot", imageSlot.ToString()),
+        });
+
+        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/GetImage", formContent);
+        var bodyRaw = await response.Content.ReadAsStringAsync();
+        return bodyRaw;
+        //return XmlUtil.DeserializeXml<ImageData>(bodyRaw);
+    }
 }
