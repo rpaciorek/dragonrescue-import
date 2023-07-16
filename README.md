@@ -1,6 +1,6 @@
 # DragonRescue Import
 
-Client side (game API) importer of dragonrescue dump to SoD emulators. Based on [original dragonrescue code](https://github.com/hictooth/dragonrescue).
+Client side (game API) importer of dragonrescue dump to SoD emulators. Based on [original dragonrescue code](https://github.com/hictooth/dragonrescue) by hictooth.
 
 This is first public release (alpha stage / proof of concept) – only dragons import are supported.
 
