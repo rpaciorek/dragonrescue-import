@@ -110,4 +110,17 @@ public static class DragonApi {
         return bodyRaw;
         //return XmlUtil.DeserializeXml<RaisedPetData[]>(bodyRaw);
     }
+    
+    public static async Task<string> GetPetAchievementsByUserID(HttpClient client, string apiToken, string userId) {
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("userId", userId),
+        });
+
+        var response = await client.PostAsync(Config.URL_CONT_API + "/AchievementWebService.asmx/GetPetAchievementsByUserID", formContent);
+        var bodyRaw = await response.Content.ReadAsStringAsync();
+        return bodyRaw;
+        //return XmlUtil.DeserializeXml<ArrayOfUserAchievementInfo>(bodyRaw);
+    }
 }

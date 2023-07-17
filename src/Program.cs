@@ -98,6 +98,10 @@ foreach (UserProfileData profile in childrenObject.UserProfiles) {
         string pets = await DragonApi.GetAllActivePetsByuserId(client, childApiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
 
+        Console.WriteLine("Fetching dragon achievements ...");
+        string petAchievements = await DragonApi.GetPetAchievementsByUserID(client, childApiToken, profile.ID);
+        FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
+        
         for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
             Console.WriteLine(string.Format("Fetching image slot {0} ...", i));
             string imageData = await ImageApi.GetImageData(client, childApiToken, i);
