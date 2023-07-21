@@ -64,7 +64,7 @@ public static class DragonApi {
         // update original dragon
         
         // avoid locked dragons in Edge
-        for (int i = 0; i < raisedPetData.ChildNodes.Count; i++) {
+        for (int i = raisedPetData.ChildNodes.Count - 1; i >= 0; --i) {
             if (raisedPetData.ChildNodes[i].Name == "at" && raisedPetData.ChildNodes[i]["k"].InnerText == "TicketID") {
                 raisedPetData.RemoveChild(raisedPetData.ChildNodes[i]);
             }

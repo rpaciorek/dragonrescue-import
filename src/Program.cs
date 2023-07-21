@@ -24,14 +24,23 @@ string path = commandlineArgs[7];
 // open file and read filelist from basedir
 
 XmlDocument dragonsXml = new XmlDocument();
+XmlDocument stablesXml = new XmlDocument();
 List<string> dragonsFiles = new List<string>();
 
 if (runningmode == "IMPORT") {
     dragonsXml.PreserveWhitespace = true;
     dragonsXml.Load(path);
 
+    try {
+        stablesXml.Load(File.OpenText(Path.GetDirectoryName(path) + "/" + dragonsXml["ArrayOfRaisedPetData"]["RaisedPetData"]["uid"].InnerText + "-Stables.xml"));
+    } catch (FileNotFoundException) {
+        stablesXml = null;
+        Console.WriteLine("Can't open stables file (this is normal for original SoD data) ... ignoring");
+    }
+    
     dragonsFiles.AddRange(Directory.GetFiles(Path.GetDirectoryName(path)).ToList());
 }
+
 
 // connect to server
 
@@ -62,17 +71,20 @@ foreach (UserProfileData profile in childrenObject.UserProfiles) {
     
     // process dragons XML (do import)
     if (runningmode == "IMPORT") {
+        var dragonsIDMap = new Dictionary<string, string>();
         for (int j = 0; j < dragonsXml.ChildNodes.Count; j++) {
             for (int i = 0; i < dragonsXml.ChildNodes[j].ChildNodes.Count; i++) {
                 var raisedPetData = dragonsXml.ChildNodes[j].ChildNodes[i];
                 if (raisedPetData.HasChildNodes && raisedPetData.Name == "RaisedPetData") {
+                    var vikingUID = raisedPetData["uid"].InnerText;
+                    var dragonID  = raisedPetData["id"].InnerText;
+                    var dragonEID = raisedPetData["eid"].InnerText;
+                    var dragonIP  = raisedPetData["ip"].InnerText;
                     
                     // read image data if available
                     
-                    var imgUID = raisedPetData["uid"].InnerText;
-                    var imgIP  = raisedPetData["ip"].InnerText;
                     string? imgData = null;
-                    string? imgFile = dragonsFiles.Find(x => x.EndsWith($"{imgUID}_EggColor_{imgIP}.jpg"));
+                    string? imgFile = dragonsFiles.Find(x => x.EndsWith($"{vikingUID}_EggColor_{dragonIP}.jpg"));
                     if (imgFile is not null) {
                         imgData = Convert.ToBase64String(System.IO.File.ReadAllBytes(imgFile));
                     }
@@ -80,6 +92,10 @@ foreach (UserProfileData profile in childrenObject.UserProfiles) {
                     // crate dragon on server
                     
                     var res = await DragonApi.CreateDragonFromXML(client, childApiToken, profile.ID, raisedPetData, imgData);
+                    
+                    // add to IDs map for update stables XML
+                    
+                    dragonsIDMap.Add(dragonID, raisedPetData["id"].InnerText);
                     
                     // check results
                     
@@ -93,14 +109,26 @@ foreach (UserProfileData profile in childrenObject.UserProfiles) {
                 }
             }
         }
+        if (stablesXml != null) {
+            var res = await StablesApi.SetStables(client, childApiToken, stablesXml, dragonsIDMap, true);
+            Console.WriteLine(res);
+        }
+    } else if (runningmode == "IMPORT_S") {
+        stablesXml.Load(path);
+        var res = await StablesApi.SetStables(client, childApiToken, stablesXml, new Dictionary<string, string>(), true);
+        Console.WriteLine(res);
     } else if (runningmode == "EXPORT") {
         Console.WriteLine("Fetching dragons ...");
-        string pets = await DragonApi.GetAllActivePetsByuserId(client, childApiToken, profile.ID);
+        var pets = await DragonApi.GetAllActivePetsByuserId(client, childApiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
 
-        Console.WriteLine("Fetching dragon achievements ...");
-        string petAchievements = await DragonApi.GetPetAchievementsByUserID(client, childApiToken, profile.ID);
+        Console.WriteLine("Fetching dragons achievements ...");
+        var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, childApiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
+        
+        Console.WriteLine("Fetching dragons stables ...");
+        var dragonsStables = await StablesApi.GetStables(client, childApiToken);
+        FileUtil.WriteToChildFile(path, profile.ID, "Stables.xml", dragonsStables);
         
         for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
             Console.WriteLine(string.Format("Fetching image slot {0} ...", i));
