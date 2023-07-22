@@ -23,6 +23,7 @@ public static class StablesApi {
     
     public static async Task<string> SetStables(HttpClient client, string apiToken, XmlDocument newStablesXml, Dictionary<string, string> dragonsIDMap, bool replace) {
         var inventoryChanges = new Dictionary<int, int>();
+        var inventoryIDs = new Dictionary<int, int>();
         int oldStablesCount = 0;
         int newStablesCount = 0;
         XmlNode stablesCountNode = null;
@@ -57,6 +58,7 @@ public static class StablesApi {
                         inventoryChanges[itemID] -= 1;
                     } catch (KeyNotFoundException) {
                         inventoryChanges[itemID] = -1;
+                        inventoryIDs[itemID] = Convert.ToInt32(stableData["StableData"]["InventoryID"].InnerText);
                     }
                     
                     // remove "old" stable from "current" stables xml
@@ -74,14 +76,6 @@ public static class StablesApi {
                 stableData.PreserveWhitespace = true;
                 stableData.LoadXml(newStablesXml["Pairs"].ChildNodes[i]["PairValue"].InnerText);
 
-                // count stables items to add to inventory
-                int itemID = Convert.ToInt32(stableData["StableData"]["ItemID"].InnerText);
-                try {
-                    inventoryChanges[itemID] += 1;
-                } catch (KeyNotFoundException) {
-                    inventoryChanges[itemID] = 1;
-                }
-                
                 // update dragons IDs
                 for (int j = 0; j < stableData["StableData"].ChildNodes.Count; ++j) {
                     if (stableData["StableData"].ChildNodes[j].Name == "Nests") {
@@ -92,6 +86,37 @@ public static class StablesApi {
                     }
                 }
                     
+                // count stables items to add to inventory
+                int itemID = Convert.ToInt32(stableData["StableData"]["ItemID"].InnerText);
+                try {
+                    inventoryChanges[itemID] += 1;
+                } catch (KeyNotFoundException) {
+                    inventoryChanges[itemID] = 1;
+                }
+                
+                /// update InventoryID
+                try {
+                     stableData["StableData"]["InventoryID"].InnerText = inventoryIDs[itemID].ToString();
+                } catch (KeyNotFoundException) {
+                    // get item (because we need inventoryID)
+                    Thread.Sleep(Config.NICE);
+                    string res = await InventoryApi.AddItems(client, apiToken, itemID, 1);
+                    XmlDocument resXML = new XmlDocument();
+                    resXML.LoadXml(res);
+                    
+                    // get inventoryID
+                    int inventoryID = Convert.ToInt32(resXML["CIRS"]["cids"]["cid"].InnerText);
+                    stableData["StableData"]["InventoryID"].InnerText = inventoryID.ToString();
+                    inventoryIDs[itemID] = inventoryID;
+                    
+                    // this stable was add to inventory so decrease value inventoryChanges
+                    // (should be zero now, because this is doing only on first stable of a given type)
+                    inventoryChanges[itemID] -= 1;
+                }
+                
+                /// update ID tag
+                stableData["StableData"]["ID"].InnerText = (oldStablesCount+newStablesCount).ToString();
+                 
                 // add "new" stable data to "current" stables xml
                 XmlElement newPair = stablesXml.CreateElement("Pair");
                 
@@ -123,25 +148,20 @@ public static class StablesApi {
             new KeyValuePair<string, string>("pairId", "2014"),
             new KeyValuePair<string, string>("contentXML", stablesXml.OuterXml),
         });
-        
         Thread.Sleep(Config.NICE);
         var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/SetKeyValuePair", formContent);
         var bodyRaw = await response.Content.ReadAsStringAsync();
         
         // add/remove stables itmes to/from inventory
-        foreach (var x in inventoryChanges) {
-            Console.WriteLine("InventoryChanges: " + x.Key.ToString() + "  " + x.Value.ToString());
-            if (x.Value != 0) {
-                Thread.Sleep(Config.NICE);
-                string res = await InventoryApi.AddItem(client, apiToken, x.Key, x.Value);
-                try {
-                    XmlDocument resXML = new XmlDocument();
-                    resXML.LoadXml(res);
-                    if (resXML["CIRS"]["s"].InnerText == "true")
-                        continue;
-                } catch {}
-                Console.WriteLine(string.Format("Error while adding {0} of {0} stable items to inventory", x.Value, x.Key));
-            }
+        Thread.Sleep(Config.NICE);
+        string res2 = await InventoryApi.AddItems(client, apiToken, inventoryChanges);
+        try {
+            XmlDocument resXML = new XmlDocument();
+            resXML.LoadXml(res2);
+            if (resXML["CIRS"]["s"].InnerText != "true")
+                throw new Exception();
+        } catch {
+            Console.WriteLine("Error while adding stable items to inventory");
         }
         
         return bodyRaw;
