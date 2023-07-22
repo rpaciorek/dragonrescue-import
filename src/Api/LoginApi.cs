@@ -67,4 +67,37 @@ public static class LoginApi {
         var bodyEncrypted = XmlUtil.DeserializeXml<string>(bodyRaw);
         return TripleDES.DecryptUnicode(bodyEncrypted, Config.KEY);
     }
+    
+    
+    public static async Task<(HttpClient, string, string)> DoVikingLogin(string username, string password, string viking) {
+        Console.WriteLine(string.Format("Logging into School of Dragons as '{0}' with password '{1}'...", username, password));
+
+        HttpClient client = new HttpClient();
+        string loginInfo = await LoginApi.LoginParent(client, username, password);
+
+        ParentLoginInfo loginInfoObject = XmlUtil.DeserializeXml<ParentLoginInfo>(loginInfo);
+        if (loginInfoObject.Status != MembershipUserStatus.Success) {
+            Console.WriteLine("Login error. Please check username and password.");
+        } else {
+            Console.WriteLine("Fetching child profiles...");
+            string children = await LoginApi.GetDetailedChildList(client, loginInfoObject.ApiToken);
+            UserProfileDataList childrenObject = XmlUtil.DeserializeXml<UserProfileDataList>(children);
+            Console.WriteLine(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
+
+            foreach (UserProfileData profile in childrenObject.UserProfiles) {
+                if (viking != profile.AvatarInfo.UserInfo.FirstName && viking != profile.AvatarInfo.AvatarData.DisplayName) {
+                    Console.WriteLine(string.Format("Skip child profile: {0} ({1}).", profile.AvatarInfo.UserInfo.FirstName, profile.AvatarInfo.AvatarData.DisplayName));
+                    continue;
+                }
+                
+                Console.WriteLine(string.Format("Selecting profile {0} ({1}, {2})...", profile.AvatarInfo.UserInfo.FirstName, profile.AvatarInfo.AvatarData.DisplayName, profile.ID));
+                var childApiToken = await LoginApi.LoginChild(client, loginInfoObject.ApiToken, profile.ID);
+                
+                return (client, childApiToken, profile.ID);
+            }
+        }
+
+        Environment.Exit(1);
+        throw new Exception(); 
+    }
 }
