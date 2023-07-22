@@ -70,8 +70,8 @@ public static class LoginApi {
     
     
     public static async Task<(HttpClient, string, string)> DoVikingLogin(string username, string password, string viking) {
-        Console.WriteLine(string.Format("Logging into School of Dragons as '{0}' with password '{1}'...", username, password));
-
+        Console.WriteLine(string.Format("Logging into School of Dragons (userApiUrl={2}, contentApiUrl={3}) as '{0}' with password '{1}'...", username, password, Config.URL_USER_API, Config.URL_CONT_API));
+        
         HttpClient client = new HttpClient();
         string loginInfo = await LoginApi.LoginParent(client, username, password);
 
