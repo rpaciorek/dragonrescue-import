@@ -159,7 +159,7 @@ class Program {
         inputFiles.AddRange(Directory.GetFiles(Path.GetDirectoryName(path)).ToList());
         
         // connect to server and login as viking
-        (var client, var apiToken, var userID) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
         
         // process dragons XML (do import)
         var dragonsIDMap = new Dictionary<string, string>();
@@ -182,7 +182,7 @@ class Program {
                     
                     // crate dragon on server
                     
-                    var res = await DragonApi.CreateDragonFromXML(client, apiToken, userID, raisedPetData, imgData);
+                    var res = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, imgData);
                     
                     // add to IDs map for update stables XML
                     
@@ -211,7 +211,7 @@ class Program {
         stablesXml.Load(path);
         
         // connect to server and login as viking
-        (var client, var apiToken, var userID) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
         
         // send stables to server
         var res = await StablesApi.SetStables(client, apiToken, stablesXml, new Dictionary<string, string>(), replaceStables);
@@ -219,31 +219,38 @@ class Program {
     }
     
     static async System.Threading.Tasks.Task Export(string username, string password, string viking, string path) {
-        (var client, var apiToken, var userID) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
         
         Console.WriteLine("Fetching dragons ...");
-        var pets = await DragonApi.GetAllActivePetsByuserId(client, apiToken, userID);
-        FileUtil.WriteToChildFile(path, userID, "GetAllActivePetsByuserId.xml", pets);
+        var pets = await DragonApi.GetAllActivePetsByuserId(client, apiToken, profile.ID);
+        FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
 
         Console.WriteLine("Fetching dragons achievements ...");
-        var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, userID);
-        FileUtil.WriteToChildFile(path, userID, "GetPetAchievementsByUserID.xml", petAchievements);
+        var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, profile.ID);
+        FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
         
         Console.WriteLine("Fetching dragons stables ...");
         var dragonsStables = await StablesApi.GetStables(client, apiToken);
-        FileUtil.WriteToChildFile(path, userID, "Stables.xml", dragonsStables);
+        FileUtil.WriteToChildFile(path, profile.ID, "Stables.xml", dragonsStables);
+        
+        Console.WriteLine("Write viking avatar ...");
+        FileUtil.WriteToChildFile(path, profile.ID, "VikingProfileData.xml", XmlUtil.SerializeXml(profile));
+       
+        Console.WriteLine("Fetching inventory ...");
+        string childInventory = await InventoryApi.GetCommonInventory(client, apiToken);
+        FileUtil.WriteToChildFile(path, profile.ID, "GetCommonInventory.xml", childInventory);
         
         for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
             Console.WriteLine(string.Format("Fetching image slot {0} ...", i));
             string imageData = await ImageApi.GetImageData(client, apiToken, i);
             ImageData imageDataObject = XmlUtil.DeserializeXml<ImageData>(imageData);
             if (imageDataObject is null || string.IsNullOrWhiteSpace(imageDataObject.ImageURL)) break;
-            //FileUtil.WriteToChildFile(path, userID, String.Format("{0}-{1}", i, "GetImageData.xml"), imageData);
+            //FileUtil.WriteToChildFile(path, profile.ID, String.Format("{0}-{1}", i, "GetImageData.xml"), imageData);
 
             // now get the image itself
             Console.WriteLine(string.Format("Downloading image {0} ...", i));
             string imageUrl = imageDataObject.ImageURL;
-            string filename = $"{userID}_EggColor_{i}.jpg";
+            string filename = $"{profile.ID}_EggColor_{i}.jpg";
             FileUtil.DownloadFile(path, filename, imageUrl);
         }
     }

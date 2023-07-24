@@ -1,5 +1,6 @@
 using System.Net;
 using dragonrescue.Util;
+using dragonrescue.Schema;
 
 namespace dragonrescue.Api;
 public static class InventoryApi {
@@ -25,5 +26,26 @@ public static class InventoryApi {
         var bodyRaw = await response.Content.ReadAsStringAsync();
         
         return bodyRaw;
+    }
+    
+    public static async Task<string> GetCommonInventory(HttpClient client, string apiToken) {
+        GetCommonInventoryRequest request = new GetCommonInventoryRequest {
+            ContainerId = 1,
+            LoadItemStats = true,
+            Locale = "en-US"
+        };
+        var requestString = XmlUtil.SerializeXml(request);
+
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("getCommonInventoryRequestXml", requestString)
+        });
+
+        var response = await client.PostAsync(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetCommonInventory", formContent);
+        var bodyRaw = await response.Content.ReadAsStringAsync();
+        
+        return bodyRaw;
+        //return XmlUtil.DeserializeXml<CommonInventoryData>(bodyRaw);
     }
 }

@@ -69,7 +69,7 @@ public static class LoginApi {
     }
     
     
-    public static async Task<(HttpClient, string, string)> DoVikingLogin(string username, string password, string viking) {
+    public static async Task<(HttpClient, string, UserProfileData)> DoVikingLogin(string username, string password, string viking) {
         Console.WriteLine(string.Format("Logging into School of Dragons (userApiUrl={2}, contentApiUrl={3}) as '{0}' with password '{1}'...", username, password, Config.URL_USER_API, Config.URL_CONT_API));
         
         HttpClient client = new HttpClient();
@@ -85,15 +85,15 @@ public static class LoginApi {
             Console.WriteLine(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
 
             foreach (UserProfileData profile in childrenObject.UserProfiles) {
-                if (viking != profile.AvatarInfo.UserInfo.FirstName && viking != profile.AvatarInfo.AvatarData.DisplayName) {
-                    Console.WriteLine(string.Format("Skip child profile: {0} ({1}).", profile.AvatarInfo.UserInfo.FirstName, profile.AvatarInfo.AvatarData.DisplayName));
+                if (viking != profile.AvatarInfo.AvatarData.DisplayName) { // always is the same as profile.AvatarInfo.UserInfo.Username and (for SoDOff only) profile.AvatarInfo.UserInfo.FirstName ???
+                    Console.WriteLine(string.Format("Skip child profile: {0}.", profile.AvatarInfo.AvatarData.DisplayName));
                     continue;
                 }
                 
-                Console.WriteLine(string.Format("Selecting profile {0} ({1}, {2})...", profile.AvatarInfo.UserInfo.FirstName, profile.AvatarInfo.AvatarData.DisplayName, profile.ID));
+                Console.WriteLine(string.Format("Selecting profile {0} ({1})...", profile.AvatarInfo.AvatarData.DisplayName, profile.ID));
                 var childApiToken = await LoginApi.LoginChild(client, loginInfoObject.ApiToken, profile.ID);
                 
-                return (client, childApiToken, profile.ID);
+                return (client, childApiToken, profile);
             }
         }
 
