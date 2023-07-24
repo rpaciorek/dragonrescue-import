@@ -12,9 +12,7 @@ public static class DragonApi {
             new KeyValuePair<string, string>("request", request),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/V2/ContentWebService.asmx/CreatePet", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
-        
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/V2/ContentWebService.asmx/CreatePet", formContent);
         return bodyRaw;
     }
 
@@ -25,9 +23,7 @@ public static class DragonApi {
             new KeyValuePair<string, string>("request", request),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/v3/ContentWebService.asmx/SetRaisedPet", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
-        
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/v3/ContentWebService.asmx/SetRaisedPet", formContent);
         return bodyRaw;
     }
 
@@ -85,8 +81,7 @@ public static class DragonApi {
             new KeyValuePair<string, string>("active", "True"),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetAllActivePetsByuserId", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetAllActivePetsByuserId", formContent);
         return bodyRaw;
         //return XmlUtil.DeserializeXml<RaisedPetData[]>(bodyRaw);
     }
@@ -98,8 +93,7 @@ public static class DragonApi {
             new KeyValuePair<string, string>("userId", userId),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/AchievementWebService.asmx/GetPetAchievementsByUserID", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/AchievementWebService.asmx/GetPetAchievementsByUserID", formContent);
         return bodyRaw;
         //return XmlUtil.DeserializeXml<ArrayOfUserAchievementInfo>(bodyRaw);
     }

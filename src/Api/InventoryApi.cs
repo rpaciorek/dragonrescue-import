@@ -22,8 +22,7 @@ public static class InventoryApi {
             new KeyValuePair<string, string>("ContainerId", "1"),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/SetCommonInventory", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/SetCommonInventory", formContent);
         
         return bodyRaw;
     }
@@ -42,8 +41,7 @@ public static class InventoryApi {
             new KeyValuePair<string, string>("getCommonInventoryRequestXml", requestString)
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetCommonInventory", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/V2/ContentWebService.asmx/GetCommonInventory", formContent);
         
         return bodyRaw;
         //return XmlUtil.DeserializeXml<CommonInventoryData>(bodyRaw);

@@ -82,7 +82,8 @@ class Program {
         var importStablesMode = new Option<ImportStablesModes>(
             name: "--stables-mode",
             description: 
-                "Specifies the mode of importing stables - adding new ones or replacing existing ones.\n Default is auto – replace for --mode=stable, add for --mode=dragons",
+                "Specifies the mode of importing stables - adding new ones or replacing existing ones.\n"+
+                "Default is auto: replace for --mode=stable, add for --mode=dragons",
             getDefaultValue: () => ImportStablesModes.auto
         );
 

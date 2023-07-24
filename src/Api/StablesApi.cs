@@ -12,8 +12,7 @@ public static class StablesApi {
             new KeyValuePair<string, string>("pairId", "2014"),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/GetKeyValuePair", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/GetKeyValuePair", formContent);
         
         XmlDocument stablesXml = new XmlDocument();
         stablesXml.LoadXml(bodyRaw);
@@ -149,8 +148,7 @@ public static class StablesApi {
             new KeyValuePair<string, string>("contentXML", stablesXml.OuterXml),
         });
         Thread.Sleep(Config.NICE);
-        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/SetKeyValuePair", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/SetKeyValuePair", formContent);
         
         // add/remove stables itmes to/from inventory
         Thread.Sleep(Config.NICE);

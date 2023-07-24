@@ -19,8 +19,7 @@ public static class LoginApi {
             new KeyValuePair<string, string>("parentLoginData", loginDataStringEncrypted)
         });
 
-        var response = await client.PostAsync(Config.URL_USER_API + "/v3/AuthenticationWebService.asmx/LoginParent", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_USER_API + "/v3/AuthenticationWebService.asmx/LoginParent", formContent);
         var bodyEncrypted = XmlUtil.DeserializeXml<string>(bodyRaw);
         var bodyDecrypted = TripleDES.DecryptUnicode(bodyEncrypted, Config.KEY);
         return bodyDecrypted;
@@ -33,8 +32,7 @@ public static class LoginApi {
             new KeyValuePair<string, string>("parentApiToken", apiToken)
         });
 
-        var response = await client.PostAsync(Config.URL_USER_API + "/ProfileWebService.asmx/GetDetailedChildList", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_USER_API + "/ProfileWebService.asmx/GetDetailedChildList", formContent);
         return bodyRaw;
         //return XmlUtil.DeserializeXml<UserProfileDataList>(bodyRaw);
     }
@@ -62,8 +60,7 @@ public static class LoginApi {
             new KeyValuePair<string, string>("locale", locale),
         });
 
-        var response = await client.PostAsync(Config.URL_USER_API + "/AuthenticationWebService.asmx/LoginChild", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_USER_API + "/AuthenticationWebService.asmx/LoginChild", formContent);
         var bodyEncrypted = XmlUtil.DeserializeXml<string>(bodyRaw);
         return TripleDES.DecryptUnicode(bodyEncrypted, Config.KEY);
     }

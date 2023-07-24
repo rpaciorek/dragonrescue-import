@@ -14,13 +14,13 @@ public static class ImageApi {
             new KeyValuePair<string, string>("imageFile", image.ToString()),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/SetImage", formContent);
-        if (response.StatusCode != HttpStatusCode.OK) {
-            response.Dispose();
-            response = await client.PostAsync(Config.URL_CONT_API + "/v3/ContentWebService.asmx/SetImage", formContent);
+        string bodyRaw = null;
+        try {
+            bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/SetImage", formContent);
+        } catch {
+            bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/v3/ContentWebService.asmx/SetImage", formContent);
         }
-        var bodyRaw = await response.Content.ReadAsStringAsync();
-        response.Dispose();
+       
         return bodyRaw;
     }
     
@@ -32,8 +32,7 @@ public static class ImageApi {
             new KeyValuePair<string, string>("ImageSlot", imageSlot.ToString()),
         });
 
-        var response = await client.PostAsync(Config.URL_CONT_API + "/ContentWebService.asmx/GetImage", formContent);
-        var bodyRaw = await response.Content.ReadAsStringAsync();
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/GetImage", formContent);
         return bodyRaw;
         //return XmlUtil.DeserializeXml<ImageData>(bodyRaw);
     }
