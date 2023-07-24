@@ -241,6 +241,23 @@ class Program {
         string childInventory = await InventoryApi.GetCommonInventory(client, apiToken);
         FileUtil.WriteToChildFile(path, profile.ID, "GetCommonInventory.xml", childInventory);
         
+        try {
+            Console.WriteLine("Fetching rooms (farms) ...");
+            string rooms = await FarmApi.GetUserRoomList(client, apiToken, profile.ID);
+            
+            FileUtil.WriteToChildFile(path, profile.ID, "GetUserRoomList.xml", rooms);
+
+            UserRoomResponse roomsObject = XmlUtil.DeserializeXml<UserRoomResponse>(rooms);
+            foreach (UserRoom room in roomsObject.UserRoomList) {
+                if (room.RoomID is null) continue;
+                Console.WriteLine("Fetching item positions for room {0} ...", room.RoomID);
+                string itemPositions = await FarmApi.GetUserItemPositions(client, apiToken, profile.ID, room.RoomID);
+                FileUtil.WriteToChildFile(path, profile.ID, String.Format("{0}-{1}", room.RoomID, "GetUserItemPositions.xml"), itemPositions);
+            }
+        } catch {
+            Console.WriteLine("Error while exporting farms ... do your emu have farms support?");
+        }
+        
         for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
             Console.WriteLine(string.Format("Fetching image slot {0} ...", i));
             string imageData = await ImageApi.GetImageData(client, apiToken, i);
