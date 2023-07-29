@@ -16,7 +16,9 @@ class Program {
         rootCommand.AddGlobalOption(
             new Option<string?>(
                 name: "--userApiUrl",
-                description: "SoD user API URL, \n\"http://localhost:5000\" for local hosted SoDOff, \n\"http://localhost:5321\" for local hosted Project Edge",
+                description: "SoD user API URL, for example:\n" + 
+                " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
+                " \"http://localhost:5321\" for local hosted Project Edge (with default settings)",
                 parseArgument: result => {
                     Config.URL_USER_API = result.Tokens.Single().Value;
                     return Config.URL_USER_API;
@@ -26,7 +28,9 @@ class Program {
         rootCommand.AddGlobalOption(
             new Option<string?>(
                 name: "--contentApiUrl",
-                description: "SoD content API URL, \n\"http://localhost:5000\" for local hosted SoDOff, \n\"http://localhost:5320\" for local hosted Project Edge",
+                description: "SoD content API URL, for example:\n" + 
+                " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
+                " \"http://localhost:5320\" for local hosted Project Edge (with default settings)",
                 parseArgument: result => {
                     Config.URL_CONT_API = result.Tokens.Single().Value;
                     return Config.URL_CONT_API;
@@ -71,11 +75,19 @@ class Program {
             name: "--mode",
             description: 
                 "Import mode:\n" +
-                " * dragons (default) – Import dragons and stables (if available).\n" +
+                " * dragons (default) – import dragons and stables (if available).\n" +
                 "   --file option argument is path to GetAllActivePetsByuserId.xml file from dragonrescue* dump\n"+
                 "   (e.g. '../../mydragons/eba07882-0ae8-4965-9c39-07f409a1c415-GetAllActivePetsByuserId.xml')\n" +
                 " * stables – only stables will be imported – can be used to organise / change order of stables.\n" +
-                "   --file option argument is path to Stables.xml file from dragonrescue-import dump.",
+                "   --file option argument is path to Stables.xml file from dragonrescue-import dump.\n" +
+                " * inventory – only viking inventory, stables will be omitting until provide --stables-mode=add option\n" +
+                "   --file option argument is path to GetCommonInventory.xml file from dragonrescue-import dump.\n" +
+                "   WARNING: item will be added, not replaced! So repeated use import multiply items quantity.\n" +
+                "   WARNING: this is experimental feature, it can broke your account easily\n" +
+                "   WARNING: importing battle backpack not working correctly\n" +
+                " * avatar – only viking avatar data\n" +
+                "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue-import dump.\n" +
+                "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n",
             getDefaultValue: () => ImportModes.dragons
         );
         
@@ -83,17 +95,23 @@ class Program {
             name: "--stables-mode",
             description: 
                 "Specifies the mode of importing stables - adding new ones or replacing existing ones.\n"+
-                "Default is auto: replace for --mode=stable, add for --mode=dragons",
+                "Default is auto: replace for --mode=stable, add for --mode=dragons\n",
             getDefaultValue: () => ImportStablesModes.auto
         );
 
+        var importName = new Option<string?>(
+            name: "--import-name",
+            description: "Viking (in-game) name / sub profile name to import (used with --mode=avatar). When not set use value of --viking."
+        );
+        
         var importCommand = new Command("import", "Import profile into SoD.") {
             inputFile,
             importMode,
             importStablesMode,
+            importName,
         };
         importCommand.SetHandler(
-            async (username, password, viking, mode, stablesMode, path) => {
+            async (username, password, viking, mode, stablesMode, path, importName) => {
                 switch (mode) {
                     case ImportModes.dragons:
                         await Import(username, password, viking, path, (stablesMode == ImportStablesModes.replace));
@@ -101,9 +119,17 @@ class Program {
                     case ImportModes.stables:
                         await ImportOnlyStables(username, password, viking, path, (stablesMode == ImportStablesModes.auto || stablesMode == ImportStablesModes.replace));
                         break;
+                    case ImportModes.inventory:
+                        await ImportInventory(username, password, viking, path, (stablesMode != ImportStablesModes.add));
+                        break;
+                    case ImportModes.avatar:
+                        if (importName == null)
+                            importName = viking;
+                        await ImportAvatar(username, password, viking, path, importName);
+                        break;
                 }
             },
-            loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile
+            loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile, importName
         );
         rootCommand.AddCommand(importCommand);
         
@@ -137,7 +163,7 @@ class Program {
     }
     
     enum ImportModes {
-        dragons, stables
+        dragons, stables, inventory, avatar
     }
     enum ImportStablesModes {
         auto, replace, add
@@ -202,6 +228,7 @@ class Program {
             }
         }
         if (stablesXml != null) {
+            Console.WriteLine("Importing stables ...");
             var res = await StablesApi.SetStables(client, apiToken, stablesXml, dragonsIDMap, replaceStables);
             Console.WriteLine(res);
         }
@@ -215,7 +242,75 @@ class Program {
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
         
         // send stables to server
+        Console.WriteLine("Importing stables ...");
         var res = await StablesApi.SetStables(client, apiToken, stablesXml, new Dictionary<string, string>(), replaceStables);
+        Console.WriteLine(res);
+    }
+    
+    static async System.Threading.Tasks.Task ImportInventory(string username, string password, string viking, string path, bool skipStables = true) {
+        CommonInventoryData inventory = XmlUtil.DeserializeXml<CommonInventoryData>(System.IO.File.ReadAllText(path));
+        
+        var inventoryChanges = new Dictionary<int, int>();
+        foreach (UserItemData userItem in inventory.Item) {
+            if (skipStables && userItem.Item.AssetName.Length >= 12 && userItem.Item.AssetName.Substring(0,12) == "DragonStable")
+                continue;
+            
+            //Console.WriteLine($"{userItem.ItemID} {userItem.Quantity} {userItem.ItemTier} {userItem.ItemStats}");
+            // TODO support for DT items (items with non empty userItem.ItemTier and userItem.ItemStats)
+            
+            if (userItem.Item.BluePrint != null) continue;
+            
+            inventoryChanges[userItem.ItemID] = userItem.Quantity;
+        }
+        
+        // connect to server and login as viking
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        
+        // new http client due to timeout
+        HttpClient client2 = new HttpClient();
+        client2.Timeout = TimeSpan.FromMinutes(10);
+        
+        // send inventory to server
+        Console.WriteLine("Importing inventory ... please be patient ... it may take a while ...");
+        var res = await InventoryApi.AddItems(client2, apiToken, inventoryChanges);
+        Console.WriteLine(res);
+    }
+    
+    static async System.Threading.Tasks.Task ImportAvatar(string username, string password, string viking, string path, string importName) {
+        XmlDocument avatarXmlDoc = new XmlDocument();
+        avatarXmlDoc.Load(path);
+        AvatarData avatar = null;
+        
+        if (avatarXmlDoc["ArrayOfUserProfileDisplayData"] != null) {
+            foreach (XmlNode profileData in avatarXmlDoc["ArrayOfUserProfileDisplayData"].ChildNodes) {
+                var tmpAvatar = XmlUtil.DeserializeXml<AvatarData>(profileData["Avatar"]["AvatarData"].OuterXml);
+                if (tmpAvatar.DisplayName == importName) {
+                    avatar = tmpAvatar;
+                    break;
+                }
+            }
+            if (avatar == null) {
+                Console.WriteLine(string.Format("Can't find viking profile {0} in input file ({1})", importName, path));
+                return;
+            }
+        } else {
+            try {
+                avatar = XmlUtil.DeserializeXml<AvatarData>(avatarXmlDoc["UserProfileDisplayData"]["Avatar"]["AvatarData"].OuterXml);
+            } catch {
+                Console.WriteLine(string.Format("Can't find valid viking profile in input file ({0})", path));
+                return;
+            }
+        }
+        
+        // change imported name to current name
+        avatar.DisplayName = viking;
+        
+        // connect to server and login as viking
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        
+        // send avatar data to server
+        Console.WriteLine("Importing viking avatar ...");
+        var res = await VikingApi.SetAvatar(client, apiToken, avatar);
         Console.WriteLine(res);
     }
     
