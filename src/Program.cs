@@ -81,13 +81,15 @@ class Program {
                 " * stables – only stables will be imported – can be used to organise / change order of stables.\n" +
                 "   --file option argument is path to Stables.xml file from dragonrescue-import dump.\n" +
                 " * inventory – only viking inventory, stables will be omitting until provide --stables-mode=add option\n" +
-                "   --file option argument is path to GetCommonInventory.xml file from dragonrescue-import dump.\n" +
+                "   --file option argument is path to GetCommonInventory.xml file from dragonrescue* dump.\n" +
                 "   WARNING: item will be added, not replaced! So repeated use import multiply items quantity.\n" +
                 "   WARNING: this is experimental feature, it can broke your account easily\n" +
                 "   WARNING: importing battle backpack not working correctly\n" +
                 " * avatar – only viking avatar data\n" +
-                "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue-import dump.\n" +
-                "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n",
+                "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue* dump.\n" +
+                "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n" +
+                " * hideout – only viking hideout data\n" +
+                "   --file option argument is path to GetUserItemPositions_MyRoomINT.xml file from dragonrescue-import dump.\n",
             getDefaultValue: () => ImportModes.dragons
         );
         
@@ -127,6 +129,9 @@ class Program {
                             importName = viking;
                         await ImportAvatar(username, password, viking, path, importName);
                         break;
+                    case ImportModes.hideout:
+                        await ImportHideout(username, password, viking, path);
+                        break;
                 }
             },
             loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile, importName
@@ -163,7 +168,7 @@ class Program {
     }
     
     enum ImportModes {
-        dragons, stables, inventory, avatar
+        dragons, stables, inventory, avatar, hideout
     }
     enum ImportStablesModes {
         auto, replace, add
@@ -276,6 +281,18 @@ class Program {
         Console.WriteLine(res);
     }
     
+    static async System.Threading.Tasks.Task ImportHideout(string username, string password, string viking, string path, bool addToInventory = true) {
+        string roomXml = System.IO.File.ReadAllText(path);
+        
+        // connect to server and login as viking
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        
+        // send hideout to server
+        Console.WriteLine("Importing hideout ...");
+        var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT", roomXml, addToInventory);
+        Console.WriteLine(res);
+    }
+    
     static async System.Threading.Tasks.Task ImportAvatar(string username, string password, string viking, string path, string importName) {
         XmlDocument avatarXmlDoc = new XmlDocument();
         avatarXmlDoc.Load(path);
@@ -338,11 +355,11 @@ class Program {
         
         try {
             Console.WriteLine("Fetching item positions for hideout ...");
-            string itemPositions = await FarmApi.GetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT");
-            FileUtil.WriteToChildFile(path, profile.ID, "MyRoomINT-GetUserItemPositions.xml", itemPositions);
+            string itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT");
+            FileUtil.WriteToChildFile(path, profile.ID, "GetUserItemPositions_MyRoomINT.xml", itemPositions);
             
             Console.WriteLine("Fetching rooms (farms) ...");
-            string rooms = await FarmApi.GetUserRoomList(client, apiToken, profile.ID);
+            string rooms = await RoomApi.GetUserRoomList(client, apiToken, profile.ID);
             
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserRoomList.xml", rooms);
 
@@ -350,8 +367,8 @@ class Program {
             foreach (UserRoom room in roomsObject.UserRoomList) {
                 if (room.RoomID is null) continue;
                 Console.WriteLine("Fetching item positions for room {0} ...", room.RoomID);
-                itemPositions = await FarmApi.GetUserItemPositions(client, apiToken, profile.ID, room.RoomID);
-                FileUtil.WriteToChildFile(path, profile.ID, String.Format("{0}-{1}", room.RoomID, "GetUserItemPositions.xml"), itemPositions);
+                itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, room.RoomID);
+                FileUtil.WriteToChildFile(path, profile.ID, String.Format("GetUserItemPositions_{0}.xml", room.RoomID), itemPositions);
             }
             
         } catch {
