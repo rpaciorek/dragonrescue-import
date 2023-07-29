@@ -1,6 +1,6 @@
 using System.Net;
-using dragonrescue.Schema;
 using dragonrescue.Util;
+using dragonrescue.Schema;
 
 namespace dragonrescue.Api;
 public static class LoginApi {

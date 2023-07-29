@@ -1,6 +1,6 @@
 using System.Net;
-using dragonrescue.Schema;
 using dragonrescue.Util;
+using dragonrescue.Schema;
 
 namespace dragonrescue.Api;
 public static class ImageApi {
@@ -10,7 +10,7 @@ public static class ImageApi {
             new KeyValuePair<string, string>("apiToken", apiToken),
             new KeyValuePair<string, string>("ImageType", "EggColor"),
             new KeyValuePair<string, string>("ImageSlot", imageSlot.ToString()),
-            new KeyValuePair<string, string>("contentXML", "<ImageData xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> <ImageURL /> <TemplateName>T</TemplateName> </ImageData>"),
+            new KeyValuePair<string, string>("contentXML", XmlUtil.SerializeXml(new ImageData(){TemplateName="T",ImageURL=""})),
             new KeyValuePair<string, string>("imageFile", image.ToString()),
         });
 

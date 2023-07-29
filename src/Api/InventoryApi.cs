@@ -9,16 +9,16 @@ public static class InventoryApi {
     }
     
     public static async Task<string> AddItems(HttpClient client, string apiToken, Dictionary<int, int> itemsCount) {
-        string xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ArrayOfCommonInventoryRequest xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+        var request = new List<CommonInventoryRequest>();
+        
         foreach (var x in itemsCount) {
-            xml += "<CommonInventoryRequest><iid>" + x.Key.ToString() + "</iid><q>" + x.Value.ToString() + "</q></CommonInventoryRequest>";
+            request.Add(new CommonInventoryRequest(){ItemID=x.Key, Quantity=x.Value});
         }
-        xml += "</ArrayOfCommonInventoryRequest>";
         
         var formContent = new FormUrlEncodedContent(new[] {
             new KeyValuePair<string, string>("apiKey", Config.APIKEY),
             new KeyValuePair<string, string>("apiToken", apiToken),
-            new KeyValuePair<string, string>("commonInventoryRequestXml", xml),
+            new KeyValuePair<string, string>("commonInventoryRequestXml", XmlUtil.SerializeXml(request.ToArray())),
             new KeyValuePair<string, string>("ContainerId", "1"),
         });
 
