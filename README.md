@@ -20,13 +20,13 @@ Use import with caution – in case of bug can broke your current account / viki
 * import
 	* dragons (without XP - see TODO)
 	* stables
-		* **Note:** import from original dragonrescue dumps doesn't work and won't work, due to the lack of dragon-stables mapping in original data – you must move in dragons to stables manually
+		* **Note:** import stables from original dragonrescue dumps doesn't work and won't work, due to the lack of dragon-stables mapping in original data – you must move in dragons to stables manually
 	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
 	* avatar (without XP)
 
 ### What doesn't work – TODO
 
-* import dragons XP (need enough support for XP system in emus)
+* import dragons XP (need (more) support for XP system in emus)
 * import battle items (need support for Dragon Tactics (battle) items in emus)
 * import hideout and farm
 
