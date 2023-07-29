@@ -5,23 +5,44 @@ Client side (game API) importer / exporter for SoD emulators. Based on [original
 Allows import data from dragonrescue dump into emu and export data from emu in the same format.
 So allows also move dragons between emu servers.
 
+Use import with caution – in case of bug can broke your current account / viking.
 
-This is early alpha version (proof of concept) – only dragons and stables import/export are supported.
+## Status
 
-* Due to the lack/incomplete of support for the XP system in current emus version, XP points are not imported.
-* Due to the lack of data dragon-stables mapping will not be imported for original dragonrescue dumps. – You must move in dragon to stable manually.
-* Use on own risk – in case of bug can broke your current account / viking.
+### What works
 
-## Build
+* export
+	* dragons (with XP)
+	* stables
+	* inventory
+	* avatar (with XP)
+	* hideout and farm
+* import
+	* dragons (without XP - see TODO)
+	* stables
+		* **Note:** import from original dragonrescue dumps doesn't work and won't work, due to the lack of dragon-stables mapping in original data – you must move in dragons to stables manually
+	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
+	* avatar (without XP)
+
+### What doesn't work – TODO
+
+* import dragons XP (need enough support for XP system in emus)
+* import battle items (need support for Dragon Tactics (battle) items in emus)
+* import hideout and farm
+
+
+## Usage
+
+### Build
 
 ```
 cd src
 dotnet build
 ```
 
-## Running
+### Running
 
-### import
+#### import
 
 ```
 ./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" --username="username" --password="password" --viking="viking_name" import --file "PATH_TO_GetAllActivePetsByuserId.xml"
@@ -29,7 +50,7 @@ dotnet build
 
 See `./dragonrescue-import import --help` for more options and details. Including *stables-only* import option allowing you to modify the order of stables by editing XML.
 
-### export
+#### export
 
 ```
 ./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" --username="username" --password="password" --viking="viking_name" export --path "export_dir"
