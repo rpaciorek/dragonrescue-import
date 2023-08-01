@@ -48,9 +48,9 @@ public static class RoomApi {
                 if (oldItems[i].UserItemPositionID != null) {
                     remItems[i] = oldItems[i].UserItemPositionID.Value;
                     try {
-                        inventoryChanges[oldItems[i].Item.ItemID] += 1;
+                        inventoryChanges[oldItems[i].Item.ItemID] -= 1;
                     } catch (KeyNotFoundException) {
-                        inventoryChanges[oldItems[i].Item.ItemID] = 1;
+                        inventoryChanges[oldItems[i].Item.ItemID] = -1;
                     }
                 }
             }
