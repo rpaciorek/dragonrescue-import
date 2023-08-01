@@ -14,24 +14,27 @@ Use import with caution – in case of bug can broke your current account / viki
 * export
 	* dragons (with XP)
 	* stables
-	* inventory
 	* avatar (with XP)
 	* hideout
 	* farm
+	* inventory
 * import
 	* dragons (without XP - see TODO)
 	* stables
 		* **Note:** import stables from original dragonrescue dumps doesn't work and won't work, due to the lack of dragon-stables mapping in original data – you must move in dragons to stables manually
-	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
+		* "only stables" (`--mode=stables`) import can be used to manage order of stables by edit XML file.
 	* avatar (without XP)
 	* hideout
 		* **Note:** import hideout from original dragonrescue dumps doesn't work and won't work, due to the lack of hideout in original data
+	* farm
+	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
 
 ### What doesn't work – TODO
 
 * import dragons XP (need (more) support for XP system in emus)
 * import battle items (need support for Dragon Tactics (battle) items in emus)
-* import farm
+* setting the farm name
+* test (and possibly fix) farm expansion import/export
 
 
 ## Usage
@@ -48,15 +51,19 @@ dotnet build
 #### import
 
 ```
-./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" --username="username" --password="password" --viking="viking_name" import --file "PATH_TO_GetAllActivePetsByuserId.xml"
+./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" \
+                      --username="username" --password="password" --viking="viking_name" \
+                      import --file "PATH_TO_GetAllActivePetsByuserId.xml"
 ```
 
-See `./dragonrescue-import import --help` for more options and details. Including *stables-only* import option allowing you to modify the order of stables by editing XML.
+**See `./dragonrescue-import import --help` for more options and details.**
 
 #### export
 
 ```
-./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" --username="username" --password="password" --viking="viking_name" export --path "export_dir"
+./dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL"\
+                      --username="username" --password="password" --viking="viking_name"\
+                      export --path "export_dir"
 ```
 
 Where:

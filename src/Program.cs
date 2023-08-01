@@ -8,6 +8,14 @@ using dragonrescue.Schema;
 using System.CommandLine;
 
 class Program {
+    enum ImportModes {
+        dragons, stables, inventory, avatar, hideout, farm
+    }
+    
+    enum ImportStablesModes {
+        auto, replace, add
+    }
+    
     static async Task<int> Main(string[] args) {
         var rootCommand = new RootCommand(string.Format("SoD account data import/export tool.\n\nSee `{0} command --help` for command details.", System.AppDomain.CurrentDomain.FriendlyName));
         
@@ -89,7 +97,9 @@ class Program {
                 "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue* dump.\n" +
                 "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n" +
                 " * hideout – only viking hideout data\n" +
-                "   --file option argument is path to GetUserItemPositions_MyRoomINT.xml file from dragonrescue-import dump.\n",
+                "   --file option argument is path to GetUserItemPositions_MyRoomINT.xml file from dragonrescue-import dump.\n" +
+                " * farm – only viking farm data\n" +
+                "   --file option argument is path to GetUserRoomList.xml file from dragonrescue* dump.\n",
             getDefaultValue: () => ImportModes.dragons
         );
         
@@ -106,17 +116,23 @@ class Program {
             description: "Viking (in-game) name / sub profile name to import (used with --mode=avatar). When not set use value of --viking."
         );
         
+        var skipInventory = new Option<bool>(
+            name: "--skip-inventory",
+            description: "Skip inventory update on hideout and farm import."
+        );
+        
         var importCommand = new Command("import", "Import profile into SoD.") {
             inputFile,
             importMode,
             importStablesMode,
             importName,
+            skipInventory,
         };
         importCommand.SetHandler(
-            async (username, password, viking, mode, stablesMode, path, importName) => {
+            async (username, password, viking, mode, stablesMode, path, importName, skipInventory) => {
                 switch (mode) {
                     case ImportModes.dragons:
-                        await Import(username, password, viking, path, (stablesMode == ImportStablesModes.replace));
+                        await ImportDragons(username, password, viking, path, (stablesMode == ImportStablesModes.replace));
                         break;
                     case ImportModes.stables:
                         await ImportOnlyStables(username, password, viking, path, (stablesMode == ImportStablesModes.auto || stablesMode == ImportStablesModes.replace));
@@ -130,11 +146,14 @@ class Program {
                         await ImportAvatar(username, password, viking, path, importName);
                         break;
                     case ImportModes.hideout:
-                        await ImportHideout(username, password, viking, path);
+                        await ImportHideout(username, password, viking, path, !skipInventory);
+                        break;
+                    case ImportModes.farm:
+                        await ImportFarm(username, password, viking, path, !skipInventory);
                         break;
                 }
             },
-            loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile, importName
+            loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile, importName, skipInventory
         );
         rootCommand.AddCommand(importCommand);
         
@@ -167,14 +186,10 @@ class Program {
         return await rootCommand.InvokeAsync(args);
     }
     
-    enum ImportModes {
-        dragons, stables, inventory, avatar, hideout
-    }
-    enum ImportStablesModes {
-        auto, replace, add
-    }
-
-    static async System.Threading.Tasks.Task Import(string username, string password, string viking, string path, bool replaceStables = false) {
+    
+    /* IMPORT FUNCTIONS */
+    
+    static async System.Threading.Tasks.Task ImportDragons(string username, string password, string viking, string path, bool replaceStables = false) {
         XmlDocument dragonsXml = new XmlDocument();
         dragonsXml.PreserveWhitespace = true;
         dragonsXml.Load(path);
@@ -293,6 +308,39 @@ class Program {
         Console.WriteLine(res);
     }
     
+    static async System.Threading.Tasks.Task ImportFarm(string username, string password, string viking, string path, bool addToInventory = true) {
+        // read room list to import
+        var roomsList = XmlUtil.DeserializeXml<UserRoomResponse>(System.IO.File.ReadAllText(path)).UserRoomList;
+        
+        // connect to server and login as viking
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        
+        // send hideout to server
+        Console.WriteLine("Importing farm ...");
+        
+        // TODO set farm name
+        
+        foreach (UserRoom room in roomsList) {
+            if (room.RoomID is null) continue;
+            
+            string roomFile = null;
+            string roomFileNew = path.Replace("-GetUserRoomList.xml", "-GetUserItemPositions_" + room.RoomID + ".xml");
+            string roomFileOld = path.Replace("-GetUserRoomList.xml", "-" + room.RoomID + "-GetUserItemPositions.xml");
+            if (File.Exists(roomFileNew)) {
+                roomFile = roomFileNew;
+            } else if (File.Exists(roomFileOld)) {
+                roomFile = roomFileOld;
+            } else {
+                Console.WriteLine("Can't find input file for room: {0}.\n  {1} nor {2} do not exist", room.RoomID, roomFileNew, roomFileOld);
+                continue;
+            }
+            
+            Console.WriteLine("Setting item positions for room {0} using file {1} ...", room.RoomID, roomFile);
+            var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, room.RoomID, System.IO.File.ReadAllText(roomFile), addToInventory);
+            Console.WriteLine(res);
+        }
+    }
+    
     static async System.Threading.Tasks.Task ImportAvatar(string username, string password, string viking, string path, string importName) {
         XmlDocument avatarXmlDoc = new XmlDocument();
         avatarXmlDoc.Load(path);
@@ -330,6 +378,9 @@ class Program {
         var res = await VikingApi.SetAvatar(client, apiToken, avatar);
         Console.WriteLine(res);
     }
+    
+    
+    /* EXPORT FUNCTIONS */
     
     static async System.Threading.Tasks.Task Export(string username, string password, string viking, string path) {
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
