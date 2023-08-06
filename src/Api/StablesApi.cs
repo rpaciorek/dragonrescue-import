@@ -46,12 +46,12 @@ public static class StablesApi {
             for (int i = stablesXml["Pairs"].ChildNodes.Count - 1; i >= 0; --i) {
                 var key = stablesXml["Pairs"].ChildNodes[i]["PairKey"].InnerText;
                 if (key.Length > 6 && key.Substring(0,6) == "Stable") {
-                    // count stables items to remove from inventory
+                    // read stable data
                     XmlDocument stableData = new XmlDocument();
                     stableData.PreserveWhitespace = true;
                     stableData.LoadXml(stablesXml["Pairs"].ChildNodes[i]["PairValue"].InnerText);
 
-                    // count stables items to add to inventory
+                    // count stables items to remove from inventory
                     int itemID = Convert.ToInt32(stableData["StableData"]["ItemID"].InnerText);
                     try {
                         inventoryChanges[itemID] -= 1;

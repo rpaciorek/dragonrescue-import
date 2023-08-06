@@ -82,12 +82,12 @@ public static class LoginApi {
             Console.WriteLine(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
 
             foreach (UserProfileData profile in childrenObject.UserProfiles) {
-                if (viking != profile.AvatarInfo.AvatarData.DisplayName) { // always is the same as profile.AvatarInfo.UserInfo.Username and (for SoDOff only) profile.AvatarInfo.UserInfo.FirstName ???
-                    Console.WriteLine(string.Format("Skip child profile: {0}.", profile.AvatarInfo.AvatarData.DisplayName));
+                if (viking != profile.AvatarInfo.UserInfo.Username) { // always is the same as profile.AvatarInfo.AvatarData.DisplayName and (for SoDOff only) profile.AvatarInfo.UserInfo.FirstName ???
+                    Console.WriteLine(string.Format("Skip child profile: {0}.", profile.AvatarInfo.UserInfo.Username));
                     continue;
                 }
                 
-                Console.WriteLine(string.Format("Selecting profile {0} ({1})...", profile.AvatarInfo.AvatarData.DisplayName, profile.ID));
+                Console.WriteLine(string.Format("Selecting profile {0} ({1})...", profile.AvatarInfo.UserInfo.Username, profile.ID));
                 var childApiToken = await LoginApi.LoginChild(client, loginInfoObject.ApiToken, profile.ID);
                 
                 return (client, childApiToken, profile);
