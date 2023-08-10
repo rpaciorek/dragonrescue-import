@@ -12,7 +12,7 @@ class Program {
         dragons, stables, inventory, avatar, hideout, farm
     }
     
-    enum ImportStablesModes {
+    enum ImportRoomModes {
         auto, replace, add
     }
     
@@ -103,12 +103,13 @@ class Program {
             getDefaultValue: () => ImportModes.dragons
         );
         
-        var importStablesMode = new Option<ImportStablesModes>(
-            name: "--stables-mode",
+        var importRoomMode = new Option<ImportRoomModes>(
+            aliases: new[] {"--stables-mode", "--room-mode"},
             description: 
-                "Specifies the mode of importing stables - adding new ones or replacing existing ones.\n"+
-                "Default is auto: replace for --mode=stable, add for --mode=dragons\n",
-            getDefaultValue: () => ImportStablesModes.auto
+                "Specifies the mode of importing stables / farm rooms - adding new ones or replacing existing ones.\n"+
+                "Note: farm room replace does *not* delete rooms that are not in imported data, only reuse old room when possible.\n"+
+                "Default is auto: replace for --mode=stable or --mode=farm, add for --mode=dragons\n",
+            getDefaultValue: () => ImportRoomModes.auto
         );
 
         var importName = new Option<string?>(
@@ -124,21 +125,21 @@ class Program {
         var importCommand = new Command("import", "Import profile into SoD.") {
             inputFile,
             importMode,
-            importStablesMode,
+            importRoomMode,
             importName,
             skipInventory,
         };
         importCommand.SetHandler(
-            async (username, password, viking, mode, stablesMode, path, importName, skipInventory) => {
+            async (username, password, viking, mode, roomMode, path, importName, skipInventory) => {
                 switch (mode) {
                     case ImportModes.dragons:
-                        await ImportDragons(username, password, viking, path, (stablesMode == ImportStablesModes.replace));
+                        await ImportDragons(username, password, viking, path, (roomMode == ImportRoomModes.replace));
                         break;
                     case ImportModes.stables:
-                        await ImportOnlyStables(username, password, viking, path, (stablesMode == ImportStablesModes.auto || stablesMode == ImportStablesModes.replace));
+                        await ImportOnlyStables(username, password, viking, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace));
                         break;
                     case ImportModes.inventory:
-                        await ImportInventory(username, password, viking, path, (stablesMode != ImportStablesModes.add));
+                        await ImportInventory(username, password, viking, path, (roomMode != ImportRoomModes.add));
                         break;
                     case ImportModes.avatar:
                         if (importName == null)
@@ -149,11 +150,11 @@ class Program {
                         await ImportHideout(username, password, viking, path, !skipInventory);
                         break;
                     case ImportModes.farm:
-                        await ImportFarm(username, password, viking, path, !skipInventory);
+                        await ImportFarm(username, password, viking, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace), !skipInventory);
                         break;
                 }
             },
-            loginUser, loginPassword, loginViking, importMode, importStablesMode, inputFile, importName, skipInventory
+            loginUser, loginPassword, loginViking, importMode, importRoomMode, inputFile, importName, skipInventory
         );
         rootCommand.AddCommand(importCommand);
         
@@ -308,21 +309,28 @@ class Program {
         Console.WriteLine(res);
     }
     
-    static async System.Threading.Tasks.Task ImportFarm(string username, string password, string viking, string path, bool addToInventory = true) {
+    static async System.Threading.Tasks.Task ImportFarm(string username, string password, string viking, string path, bool replaceRooms = true, bool addToInventory = true) {
         // read room list to import
         var roomsList = XmlUtil.DeserializeXml<UserRoomResponse>(System.IO.File.ReadAllText(path)).UserRoomList;
         
         // connect to server and login as viking
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
         
-        // send hideout to server
         Console.WriteLine("Importing farm ...");
         
-        // TODO set farm name
+        // get old rooms list
+        List<UserRoom> rooms = null;
+        if (replaceRooms) {
+            var x =await RoomApi.GetUserRoomList(client, apiToken, profile.ID);
+            Console.WriteLine(string.Format("bbbb {0}", x));
+            rooms = XmlUtil.DeserializeXml<UserRoomResponse>(x).UserRoomList;
+        }
         
+        // for each imported room
         foreach (UserRoom room in roomsList) {
             if (room.RoomID is null) continue;
             
+            // get room xml save file path
             string roomFile = null;
             string roomFileNew = path.Replace("-GetUserRoomList.xml", "-GetUserItemPositions_" + room.RoomID + ".xml");
             string roomFileOld = path.Replace("-GetUserRoomList.xml", "-" + room.RoomID + "-GetUserItemPositions.xml");
@@ -331,12 +339,45 @@ class Program {
             } else if (File.Exists(roomFileOld)) {
                 roomFile = roomFileOld;
             } else {
-                Console.WriteLine("Can't find input file for room: {0}.\n  {1} nor {2} do not exist", room.RoomID, roomFileNew, roomFileOld);
+                Console.WriteLine(string.Format("Can't find input file for room: {0}.\n  {1} nor {2} do not exist", room.RoomID, roomFileNew, roomFileOld));
                 continue;
             }
             
-            Console.WriteLine("Setting item positions for room {0} using file {1} ...", room.RoomID, roomFile);
-            var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, room.RoomID, System.IO.File.ReadAllText(roomFile), addToInventory);
+            // get new RoomID
+            string newRoomID = null;
+            if (room.RoomID == "" || room.RoomID == "MyRoomINT" || room.RoomID == "StaticFarmItems") {
+                // for special room use old RoomID
+                newRoomID = room.RoomID;
+            } else {
+                // for farm extensions ...
+                if (replaceRooms) {
+                    // find RoomID to reuse and remove from old rooms list
+                    var r = rooms.FirstOrDefault(x => x.ItemID == room.ItemID);
+                    if (r != null) {
+                        newRoomID = room.RoomID;
+                        rooms.Remove(r);
+                    }
+                }
+                if (newRoomID is null && room.ItemID != null) {
+                    // if don't have room to reuse, then add new room to get RoomID
+                    int inventoryID = await InventoryApi.AddItemAndGetInventoryId(client, apiToken, (int)room.ItemID, 1);
+                    Console.WriteLine(string.Format("aaa {0}", inventoryID));
+                    newRoomID = inventoryID.ToString();
+                }
+                if (newRoomID is null) {
+                    // TODO try use old inventory to get ItemID based on room.RoomID == InventoryID
+                    Console.WriteLine(string.Format("Room type could not be determined for room \"{0}\"", room.RoomID));
+                    continue;
+                }
+            }
+            
+            // rename room (call SetUserRoom)
+            if (!string.IsNullOrEmpty(room.Name)) {
+                var res2 = await RoomApi.SetUserRoom(client, apiToken, newRoomID, room.Name);
+            }
+            
+            Console.WriteLine(string.Format("Setting item positions for room \"{0}\" (old \"{1}\") using file {2} ...", newRoomID, room.RoomID, roomFile));
+            var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, newRoomID, System.IO.File.ReadAllText(roomFile), addToInventory);
             Console.WriteLine(res);
         }
     }
@@ -411,7 +452,6 @@ class Program {
             
             Console.WriteLine("Fetching rooms (farms) ...");
             string rooms = await RoomApi.GetUserRoomList(client, apiToken, profile.ID);
-            
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserRoomList.xml", rooms);
 
             UserRoomResponse roomsObject = XmlUtil.DeserializeXml<UserRoomResponse>(rooms);

@@ -97,14 +97,11 @@ public static class StablesApi {
                 try {
                      stableData["StableData"]["InventoryID"].InnerText = inventoryIDs[itemID].ToString();
                 } catch (KeyNotFoundException) {
-                    // get item (because we need inventoryID)
+                    // add item to get inventoryID
                     Thread.Sleep(Config.NICE);
-                    string res = await InventoryApi.AddItems(client, apiToken, itemID, 1);
-                    XmlDocument resXML = new XmlDocument();
-                    resXML.LoadXml(res);
+                    int inventoryID = await InventoryApi.AddItemAndGetInventoryId(client, apiToken, itemID, 1);
                     
-                    // get inventoryID
-                    int inventoryID = Convert.ToInt32(resXML["CIRS"]["cids"]["cid"].InnerText);
+                    // update inventoryID in stables data
                     stableData["StableData"]["InventoryID"].InnerText = inventoryID.ToString();
                     inventoryIDs[itemID] = inventoryID;
                     

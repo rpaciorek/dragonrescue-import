@@ -35,6 +35,24 @@ public static class RoomApi {
         //return XmlUtil.DeserializeXml<UserItemPositionList>(bodyRaw);
     }
     
+    public static async Task<string> SetUserRoom(HttpClient client, string apiToken, string roomId, string roomName) {
+        UserRoom request = new UserRoom {
+            RoomID = roomId,
+            Name = roomName
+        };
+        var requestString = XmlUtil.SerializeXml(request);
+        
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("request", requestString),
+        });
+
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/GetUserRoomItemPositions", formContent);
+        return bodyRaw;
+        //return XmlUtil.DeserializeXml<UserItemPositionList>(bodyRaw);
+    }
+    
     public static async Task<string> SetUserItemPositions(HttpClient client, string apiToken, string userId, string roomId, string roomXml, bool addToInventory) {
         var inventoryChanges = new Dictionary<int, int>();
         

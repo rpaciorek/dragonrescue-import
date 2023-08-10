@@ -27,14 +27,13 @@ Use import with caution – in case of bug can broke your current account / viki
 	* hideout
 		* **Note:** import hideout from original dragonrescue dumps doesn't work and won't work, due to the lack of hideout in original data
 	* farm
+		* **Note:** due to the lack some data in original dragonrescue dumps, import farm (in some cases) can be limited only to main (default) farm
 	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
 
 ### What doesn't work – TODO
 
 * import dragons XP (need (more) support for XP system in emus)
 * import battle items (need support for Dragon Tactics (battle) items in emus)
-* setting the farm name
-* test (and possibly fix) farm expansion import/export
 
 
 ## Usage

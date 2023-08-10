@@ -1,10 +1,20 @@
 using System.Net;
+using System.Xml;
 using dragonrescue.Util;
 using dragonrescue.Schema;
 
 namespace dragonrescue.Api;
 public static class InventoryApi {
-    public static async Task<string> AddItems(HttpClient client, string apiToken, int itemID, int count) {
+    public static async Task<int> AddItemAndGetInventoryId(HttpClient client, string apiToken, int itemID, int count) {
+        string res = await InventoryApi.AddItem(client, apiToken, itemID, 1);
+        XmlDocument resXML = new XmlDocument();
+        resXML.LoadXml(res);
+        
+        // return CommonInventoryID (aka UserInventoryID)
+        return Convert.ToInt32(resXML["CIRS"]["cids"]["cid"].InnerText);
+    }
+    
+    public static async Task<string> AddItem(HttpClient client, string apiToken, int itemID, int count) {
         return await AddItems(client, apiToken, new Dictionary<int, int>(){{itemID, count}});
     }
     
