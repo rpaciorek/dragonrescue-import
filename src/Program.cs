@@ -374,6 +374,7 @@ class Program {
             // rename room (call SetUserRoom)
             if (!string.IsNullOrEmpty(room.Name)) {
                 var res2 = await RoomApi.SetUserRoom(client, apiToken, newRoomID, room.Name);
+                Console.WriteLine(res2);
             }
             
             Console.WriteLine(string.Format("Setting item positions for room \"{0}\" (old \"{1}\") using file {2} ...", newRoomID, room.RoomID, roomFile));

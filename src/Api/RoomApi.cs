@@ -48,7 +48,7 @@ public static class RoomApi {
             new KeyValuePair<string, string>("request", requestString),
         });
 
-        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/GetUserRoomItemPositions", formContent);
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/SetUserRoom", formContent);
         return bodyRaw;
         //return XmlUtil.DeserializeXml<UserItemPositionList>(bodyRaw);
     }
