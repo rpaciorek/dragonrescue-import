@@ -6,7 +6,7 @@ public static class HttpClientExtensions {
         var response = await client.PostAsync(url, content);
         
         if (! response.IsSuccessStatusCode) {
-            throw new Exception("HTTP status code " + response.StatusCode);
+            throw new HttpRequestException("HTTP status code " + response.StatusCode);
         }
         
         return await response.Content.ReadAsStringAsync();

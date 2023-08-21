@@ -24,18 +24,20 @@ class Importers {
         }
         
         // read dragon XP
-        XmlDocument achievementsXml = new XmlDocument();
-        try {
-            achievementsXml.Load(File.OpenText(basePath + "-GetPetAchievementsByUserID.xml"));
-        } catch (FileNotFoundException) {
-            Console.WriteLine("Can't open dragons achievements (xp) file (this is normal for original SoD data) ...");
-            return;
-        }
         var dragonsXP = new Dictionary<string, int>();
-        foreach (XmlNode achievementInfo in achievementsXml["ArrayOfUserAchievementInfo"].ChildNodes) {
-            if (achievementInfo["p"].InnerText == "8") {
-                dragonsXP.Add(achievementInfo["u"].InnerText, Convert.ToInt32(achievementInfo["a"].InnerText));
+        try {
+            XmlDocument achievementsXml = new XmlDocument();
+            achievementsXml.Load(File.OpenText(basePath + "-GetPetAchievementsByUserID.xml"));
+            
+            foreach (XmlNode achievementInfo in achievementsXml["ArrayOfUserAchievementInfo"].ChildNodes) {
+                if (achievementInfo["p"].InnerText == "8") {
+                    dragonsXP.Add(achievementInfo["u"].InnerText, Convert.ToInt32(achievementInfo["a"].InnerText));
+                }
             }
+            Console.WriteLine(string.Format("Read XP for {0} dragons", dragonsXP.Count));
+        } catch (FileNotFoundException) {
+            Console.WriteLine("Can't open dragons achievements (xp) file ...");
+            return;
         }
         
         // read dir (for images)
@@ -64,9 +66,16 @@ class Importers {
                         imgData = Convert.ToBase64String(System.IO.File.ReadAllBytes(imgFile));
                     }
                     
-                    // crate dragon on server
+                    // get XP
                     
-                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonsXP[dragonEID], imgData);
+                    int? dragonXP = null;
+                    try {
+                        dragonXP = dragonsXP[dragonEID];
+                    } catch {}
+                    
+                    // create dragon on server
+                    
+                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonXP, imgData);
                     
                     // add to IDs map for update stables XML
                     
@@ -77,7 +86,8 @@ class Importers {
                     XmlDocument resXml = new XmlDocument();
                     resXml.LoadXml(res1);
                     if (resXml["SetRaisedPetResponse"]["RaisedPetSetResult"].InnerText == "1") {
-                        Console.WriteLine(string.Format("{0} moved to new server successfully (new id is {1} / {2})", raisedPetData["n"].InnerText, raisedPetData["id"].InnerText, raisedPetData["eid"].InnerText));
+                        Console.WriteLine(string.Format("{0} moved to new server successfully (new id is {1} / {2}, xp={3}, img={4})",
+                                                        raisedPetData["n"].InnerText, raisedPetData["id"].InnerText, raisedPetData["eid"].InnerText, res2, XmlUtil.DeserializeXml<bool>(res3)));
                     } else {
                         Console.WriteLine(string.Format("Error while moving {0} to new server: {1}", raisedPetData["n"].InnerText, res1));
                     }
