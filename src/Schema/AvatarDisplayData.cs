@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 namespace dragonrescue.Schema;
 
 // Token: 0x02000472 RID: 1138
-[XmlRoot(ElementName = "AvatarDisplayData", Namespace = "", IsNullable = false)]
+[XmlRoot(ElementName = "Avatar", Namespace = "", IsNullable = false)]
 [Serializable]
 public class AvatarDisplayData
 {

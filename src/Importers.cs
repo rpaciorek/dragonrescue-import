@@ -271,8 +271,11 @@ class Importers {
             Console.WriteLine("Importing viking XP ...");
             foreach (var xpEntry in avatar.Achievements) {
                 if (xpEntry.PointTypeID != null && xpEntry.AchievementPointTotal != null) {
-                    var res2 = VikingApi.SetPlayerXP(client, apiToken, (int)(xpEntry.PointTypeID), (int)(xpEntry.AchievementPointTotal));
-                    Console.WriteLine(string.Format(" set xp type={0} to {1} res={3}", xpEntry.PointTypeID, xpEntry.AchievementPointTotal, res2));
+                    string res2 = "err";
+                    try {
+                        res2 = await VikingApi.SetPlayerXP(client, apiToken, (int)(xpEntry.PointTypeID), (int)(xpEntry.AchievementPointTotal));
+                    } catch {}
+                    Console.WriteLine(string.Format(" set xp type={0} to {1} res={2}", xpEntry.PointTypeID, xpEntry.AchievementPointTotal, res2));
                 }
             }
         }
