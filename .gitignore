@@ -1,9 +1,3 @@
-.vs
-.vscode
-.DS_Store
-src/bin
-src/obj
-src/sodoff.db
-src/sodoff.db-shm
-src/sodoff.db-wal
-__pycache__/
+/bin
+/obj
+/dragonrescue-import--*.zip

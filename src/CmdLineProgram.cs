@@ -31,7 +31,7 @@ class Program {
         /// global options
         
         rootCommand.AddGlobalOption(
-            new Option<string?>(
+            new Option<string>(
                 name: "--userApiUrl",
                 description: "SoD user API URL, for example:\n" + 
                 " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
@@ -43,7 +43,7 @@ class Program {
             ) {IsRequired = true}
         );
         rootCommand.AddGlobalOption(
-            new Option<string?>(
+            new Option<string>(
                 name: "--contentApiUrl",
                 description: "SoD content API URL, for example:\n" + 
                 " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
@@ -55,22 +55,37 @@ class Program {
             ) {IsRequired = true}
         );
         
-        var loginUser = new Option<string?>(
-            name: "--username",
-            description: "Login username"
-        ) {IsRequired = true};
-        var loginPassword = new Option<string?>(
-            name: "--password",
-            description: "Login password"
-        ) {IsRequired = true};
-        var loginViking = new Option<string?>(
-            name: "--viking",
-            description: "Viking (in-game) name / sub profile name"
-        ) {IsRequired = true};
-        
-        rootCommand.AddGlobalOption(loginUser);
-        rootCommand.AddGlobalOption(loginPassword);
-        rootCommand.AddGlobalOption(loginViking);
+        var loginData = new LoginApi.Data();
+        rootCommand.AddGlobalOption(
+            new Option<string>(
+                name: "--username",
+                description: "Login username",
+                parseArgument: result => {
+                    loginData.username = result.Tokens.Single().Value;
+                    return loginData.username;
+                }
+            ) {IsRequired = true}
+        );
+        rootCommand.AddGlobalOption(
+            new Option<string>(
+                name: "--password",
+                description: "Login password",
+                parseArgument: result => {
+                    loginData.password = result.Tokens.Single().Value;
+                    return loginData.password;
+                }
+            ) {IsRequired = true}
+        );
+        rootCommand.AddGlobalOption(
+            new Option<string>(
+                name: "--viking",
+                description: "Viking (in-game) name / sub profile name",
+                parseArgument: result => {
+                    loginData.viking = result.Tokens.Single().Value;
+                    return loginData.viking;
+                }
+            ) {IsRequired = true}
+        );
         
         // import command
         
@@ -126,12 +141,17 @@ class Program {
             description: "Viking (in-game) name / sub profile name to import (used with --mode=avatar). When not set use value of --viking."
         );
         
+        var skipAvatarXP = new Option<bool>(
+            name: "--skip-xp",
+            description: "Skip importing avatar XP (used with --mode=avatar)."
+        );
+        
         var skipInventory = new Option<bool>(
             name: "--skip-inventory",
             description: "Skip inventory update on hideout and farm import."
         );
         
-        var importCommand = new Command("import", "Import profile into SoD.") {
+        var importCommand = new Command("import", "Import profile into SoD server.") {
             inputFile,
             importMode,
             importRoomMode,
@@ -139,31 +159,31 @@ class Program {
             skipInventory,
         };
         importCommand.SetHandler(
-            async (username, password, viking, mode, roomMode, path, importName, skipInventory) => {
+            async (mode, roomMode, path, importName, skipInventory, skipAvatarXP) => {
                 switch (mode) {
                     case ImportModes.dragons:
-                        await Importers.ImportDragons(username, password, viking, path, (roomMode == ImportRoomModes.replace));
+                        await Importers.ImportDragons(loginData, path, (roomMode == ImportRoomModes.replace));
                         break;
                     case ImportModes.stables:
-                        await Importers.ImportOnlyStables(username, password, viking, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace));
+                        await Importers.ImportOnlyStables(loginData, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace));
                         break;
                     case ImportModes.inventory:
-                        await Importers.ImportInventory(username, password, viking, path, (roomMode != ImportRoomModes.add));
+                        await Importers.ImportInventory(loginData, path, (roomMode != ImportRoomModes.add));
                         break;
                     case ImportModes.avatar:
                         if (importName == null)
-                            importName = viking;
-                        await Importers.ImportAvatar(username, password, viking, path, importName);
+                            importName = loginData.viking;
+                        await Importers.ImportAvatar(loginData, path, importName, !skipAvatarXP);
                         break;
                     case ImportModes.hideout:
-                        await Importers.ImportHideout(username, password, viking, path, !skipInventory);
+                        await Importers.ImportHideout(loginData, path, !skipInventory);
                         break;
                     case ImportModes.farm:
-                        await Importers.ImportFarm(username, password, viking, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace), !skipInventory);
+                        await Importers.ImportFarm(loginData, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace), !skipInventory);
                         break;
                 }
             },
-            loginUser, loginPassword, loginViking, importMode, importRoomMode, inputFile, importName, skipInventory
+            importMode, importRoomMode, inputFile, importName, skipInventory, skipAvatarXP
         );
         rootCommand.AddCommand(importCommand);
         
@@ -186,10 +206,10 @@ class Program {
             outDir,
         };
         exportCommand.SetHandler(
-            async (username, password, viking, path) => {
-                await Exporters.Export(username, password, viking, path);
+            async (path) => {
+                await Exporters.Export(loginData, path);
             },
-            loginUser, loginPassword, loginViking, outDir
+            outDir
         );
         rootCommand.AddCommand(exportCommand);
 

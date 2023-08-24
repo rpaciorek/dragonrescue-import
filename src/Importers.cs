@@ -6,7 +6,7 @@ using dragonrescue.Schema;
 
 namespace dragonrescue;
 class Importers {
-    public static async System.Threading.Tasks.Task ImportDragons(string username, string password, string viking, string path, bool replaceStables = false) {
+    public static async System.Threading.Tasks.Task ImportDragons(LoginApi.Data loginData, string path, bool replaceStables = false) {
         // read dragon XML
         XmlDocument dragonsXml = new XmlDocument();
         dragonsXml.PreserveWhitespace = true;
@@ -45,7 +45,7 @@ class Importers {
         inputFiles.AddRange(Directory.GetFiles(Path.GetDirectoryName(path)).ToList());
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         // process dragons XML (do import)
         var dragonsIDMap = new Dictionary<string, string>();
@@ -101,12 +101,12 @@ class Importers {
         }
     }
     
-    public static async System.Threading.Tasks.Task ImportOnlyStables(string username, string password, string viking, string path, bool replaceStables = true) {
+    public static async System.Threading.Tasks.Task ImportOnlyStables(LoginApi.Data loginData, string path, bool replaceStables = true) {
         XmlDocument stablesXml = new XmlDocument();
         stablesXml.Load(path);
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         // send stables to server
         Console.WriteLine("Importing stables ...");
@@ -114,7 +114,7 @@ class Importers {
         Console.WriteLine(res);
     }
     
-    public static async System.Threading.Tasks.Task ImportInventory(string username, string password, string viking, string path, bool skipStables = true) {
+    public static async System.Threading.Tasks.Task ImportInventory(LoginApi.Data loginData, string path, bool skipStables = true) {
         CommonInventoryData inventory = XmlUtil.DeserializeXml<CommonInventoryData>(System.IO.File.ReadAllText(path));
         
         var inventoryChanges = new Dictionary<int, int>();
@@ -131,7 +131,7 @@ class Importers {
         }
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         // new http client due to timeout
         HttpClient client2 = new HttpClient();
@@ -143,11 +143,11 @@ class Importers {
         Console.WriteLine(res);
     }
     
-    public static async System.Threading.Tasks.Task ImportHideout(string username, string password, string viking, string path, bool addToInventory = true) {
+    public static async System.Threading.Tasks.Task ImportHideout(LoginApi.Data loginData, string path, bool addToInventory = true) {
         string roomXml = System.IO.File.ReadAllText(path);
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         // send hideout to server
         Console.WriteLine("Importing hideout ...");
@@ -155,12 +155,12 @@ class Importers {
         Console.WriteLine(res);
     }
     
-    public static async System.Threading.Tasks.Task ImportFarm(string username, string password, string viking, string path, bool replaceRooms = true, bool addToInventory = true) {
+    public static async System.Threading.Tasks.Task ImportFarm(LoginApi.Data loginData, string path, bool replaceRooms = true, bool addToInventory = true) {
         // read room list to import
         var roomsList = XmlUtil.DeserializeXml<UserRoomResponse>(System.IO.File.ReadAllText(path)).UserRoomList;
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         Console.WriteLine("Importing farm ...");
         
@@ -229,15 +229,15 @@ class Importers {
         }
     }
     
-    public static async System.Threading.Tasks.Task ImportAvatar(string username, string password, string viking, string path, string importName) {
+    public static async System.Threading.Tasks.Task ImportAvatar(LoginApi.Data loginData, string path, string importName, bool importXP) {
         XmlDocument avatarXmlDoc = new XmlDocument();
         avatarXmlDoc.Load(path);
-        AvatarData avatar = null;
+        AvatarDisplayData avatar = null;
         
         if (avatarXmlDoc["ArrayOfUserProfileDisplayData"] != null) {
             foreach (XmlNode profileData in avatarXmlDoc["ArrayOfUserProfileDisplayData"].ChildNodes) {
-                var tmpAvatar = XmlUtil.DeserializeXml<AvatarData>(profileData["Avatar"]["AvatarData"].OuterXml);
-                if (tmpAvatar.DisplayName == importName) {
+                var tmpAvatar = XmlUtil.DeserializeXml<AvatarDisplayData>(profileData["Avatar"].OuterXml);
+                if (tmpAvatar.AvatarData.DisplayName == importName) {
                     avatar = tmpAvatar;
                     break;
                 }
@@ -248,7 +248,7 @@ class Importers {
             }
         } else {
             try {
-                avatar = XmlUtil.DeserializeXml<AvatarData>(avatarXmlDoc["UserProfileDisplayData"]["Avatar"]["AvatarData"].OuterXml);
+                avatar = XmlUtil.DeserializeXml<AvatarDisplayData>(avatarXmlDoc["UserProfileDisplayData"]["Avatar"].OuterXml);
             } catch {
                 Console.WriteLine(string.Format("Can't find valid viking profile in input file ({0})", path));
                 return;
@@ -256,14 +256,25 @@ class Importers {
         }
         
         // change imported name to current name
-        avatar.DisplayName = viking;
+        avatar.AvatarData.DisplayName = loginData.viking;
         
         // connect to server and login as viking
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         // send avatar data to server
         Console.WriteLine("Importing viking avatar ...");
-        var res = await VikingApi.SetAvatar(client, apiToken, avatar);
+        var res = await VikingApi.SetAvatar(client, apiToken, avatar.AvatarData);
         Console.WriteLine(res);
+        
+        // send avatar xp to server
+        if (importXP) {
+            Console.WriteLine("Importing viking XP ...");
+            foreach (var xpEntry in avatar.Achievements) {
+                if (xpEntry.PointTypeID != null && xpEntry.AchievementPointTotal != null) {
+                    var res2 = VikingApi.SetPlayerXP(client, apiToken, (int)(xpEntry.PointTypeID), (int)(xpEntry.AchievementPointTotal));
+                    Console.WriteLine(string.Format(" set xp type={0} to {1} res={3}", xpEntry.PointTypeID, xpEntry.AchievementPointTotal, res2));
+                }
+            }
+        }
     }
 }

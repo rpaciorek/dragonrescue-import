@@ -13,6 +13,17 @@ public static class VikingApi {
 
         var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/V2/ContentWebService.asmx/SetAvatar", formContent);
         return bodyRaw;
-        //return XmlUtil.DeserializeXml<ImageData>(bodyRaw);
+    }
+    
+    public static async Task<string> SetPlayerXP(HttpClient client, string apiToken, int type, int value) {
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("type", type.ToString()),
+            new KeyValuePair<string, string>("value", value.ToString()),
+        });
+
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/AchievementWebService.asmx/SetPlayerXP", formContent);
+        return bodyRaw;
     }
 }

@@ -5,8 +5,8 @@ using dragonrescue.Schema;
 
 namespace dragonrescue;
 class Exporters {
-    public static async System.Threading.Tasks.Task Export(string username, string password, string viking, string path) {
-        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(username, password, viking);
+    public static async System.Threading.Tasks.Task Export(LoginApi.Data loginData, string path) {
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         Console.WriteLine("Fetching dragons ...");
         var pets = await DragonApi.GetAllActivePetsByuserId(client, apiToken, profile.ID);

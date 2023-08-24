@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <SourceControlInformationFeatureSupported>true</SourceControlInformationFeatureSupported>
+    <Version>0.2.0</Version>
+    <InformationalVersion>$(SourceRevisionId)</InformationalVersion>
+    
+    <OutputPath>$(MSBuildThisFileDirectory)bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
+    
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+    <Exec 
+      Command="git describe --always --dirty --abbrev=16"
+      ConsoleToMSBuild="True"
+      IgnoreExitCode="False"
+      >
+      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+    </Exec>
+  </Target>
+
+
+  <!-- publish for specific operating system / architecture settings -->
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)'!=''">
+    <!-- auto add options: -self-contained true  -p:PublishSingleFile=true ... -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- include LICENCE and README in build results -->
+    <Content Include="LICENSE"   TargetPath="LICENSE.txt" CopyToOutputDirectory="Always" />
+    <Content Include="README.md" TargetPath="README.md"   CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
+  <Target Name="BuildZip" AfterTargets="Publish">
+    <!-- build zip package -->
+    <Exec WorkingDirectory="$(OutputPath)" Command="rm -fr publish/src ../../dragonrescue-import--$(RuntimeIdentifier)_$(Version).zip dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="mv publish dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="zip -r ../../dragonrescue-import--$(RuntimeIdentifier)_$(Version).zip dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
+  </Target>
+</Project>

@@ -3,7 +3,14 @@ using dragonrescue.Util;
 using dragonrescue.Schema;
 
 namespace dragonrescue.Api;
+
 public static class LoginApi {
+    public class Data {
+        public string username = "";
+        public string password = "";
+        public string viking = "";
+    }
+    
     public static async Task<string> LoginParent(HttpClient client, string UserName, string Password) {
         ParentLoginData loginData = new ParentLoginData {
             UserName = UserName,
@@ -96,5 +103,9 @@ public static class LoginApi {
 
         Environment.Exit(1);
         throw new Exception(); 
+    }
+    
+    public static async Task<(HttpClient, string, UserProfileData)> DoVikingLogin(Data loginData) {
+        return await DoVikingLogin(loginData.username, loginData.password, loginData.viking);
     }
 }
