@@ -31,11 +31,6 @@ Use import with caution – in case of bug can broke your current account / viki
 	* inventory
 		* **Warning:** inventory contains many invisible items (for example affecting quests); inventory import can broke your account
 
-### What doesn't work – TODO
-
-* import battle items (need support for Dragon Tactics (battle) items in emus)
-
-
 ## Usage
 
 ### Build
