@@ -118,16 +118,23 @@ class Importers {
         CommonInventoryData inventory = XmlUtil.DeserializeXml<CommonInventoryData>(System.IO.File.ReadAllText(path));
         
         var inventoryChanges = new Dictionary<int, int>();
+        var battleInventoryChanges = new List<BattleItemTierMap>();
         foreach (UserItemData userItem in inventory.Item) {
             if (skipStables && userItem.Item.AssetName.Length >= 12 && userItem.Item.AssetName.Substring(0,12) == "DragonStable")
                 continue;
             
-            //Console.WriteLine($"{userItem.ItemID} {userItem.Quantity} {userItem.ItemTier} {userItem.ItemStats}");
-            // TODO support for DT items (items with non empty userItem.ItemTier and userItem.ItemStats)
-            
-            if (userItem.Item.BluePrint != null) continue;
-            
-            inventoryChanges[userItem.ItemID] = userItem.Quantity;
+            if (userItem.ItemTier != null && userItem.ItemStats != null) {
+                battleInventoryChanges.Add(
+                    new BattleItemTierMap{
+                        ItemID = userItem.ItemID,
+                        Quantity = userItem.Quantity,
+                        Tier = userItem.ItemTier,
+                        ItemStats = userItem.ItemStats
+                    }
+                );
+            } else {
+                inventoryChanges[userItem.ItemID] = userItem.Quantity;
+            }
         }
         
         // connect to server and login as viking
@@ -139,8 +146,18 @@ class Importers {
         
         // send inventory to server
         Console.WriteLine("Importing inventory ... please be patient ... it may take a while ...");
-        var res = await InventoryApi.AddItems(client2, apiToken, inventoryChanges);
-        Console.WriteLine(res);
+        var res1 = await InventoryApi.AddItems(client2, apiToken, inventoryChanges);
+        
+        XmlDocument res1Xml = new XmlDocument();
+        res1Xml.LoadXml(res1);
+        Console.WriteLine(res1Xml["CIRS"]["s"].InnerText);
+        
+        Console.WriteLine("Importing battle inventory ... please be patient ... it may take a while ...");
+        var res2 = await InventoryApi.AddBattleItems(client2, apiToken, battleInventoryChanges);
+        
+        XmlDocument res2Xml = new XmlDocument();
+        res2Xml.LoadXml(res2);
+        Console.WriteLine(res2Xml["ABIRES"]["ST"].InnerText);
     }
     
     public static async System.Threading.Tasks.Task ImportHideout(LoginApi.Data loginData, string path, bool addToInventory = true) {

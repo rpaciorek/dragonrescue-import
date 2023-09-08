@@ -37,6 +37,22 @@ public static class InventoryApi {
         return bodyRaw;
     }
     
+    public static async Task<string> AddBattleItems(HttpClient client, string apiToken, List<BattleItemTierMap> itemsList) {
+        var request = new AddBattleItemsRequest {
+            BattleItemTierMaps = itemsList
+        };
+        
+        var formContent = new FormUrlEncodedContent(new[] {
+            new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+            new KeyValuePair<string, string>("apiToken", apiToken),
+            new KeyValuePair<string, string>("request", XmlUtil.SerializeXml(request)),
+        });
+
+        var bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/V2/ContentWebService.asmx/AddBattleItems", formContent);
+        
+        return bodyRaw;
+    }
+    
     public static async Task<string> GetCommonInventory(HttpClient client, string apiToken) {
         GetCommonInventoryRequest request = new GetCommonInventoryRequest {
             ContainerId = 1,

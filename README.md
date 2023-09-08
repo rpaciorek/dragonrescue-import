@@ -28,7 +28,8 @@ Use import with caution – in case of bug can broke your current account / viki
 		* **Note:** import hideout from original dragonrescue dumps doesn't work and won't work, due to the lack of hideout in original data
 	* farm
 		* **Note:** due to the lack some data in original dragonrescue dumps, import farm (in some cases) can be limited only to main (default) farm
-	* inventory (**experimental** - can broke your account; blueprint not working, battle backpack not working correctly)
+	* inventory
+		* **Warning:** inventory contains many invisible items (for example affecting quests); inventory import can broke your account
 
 ### What doesn't work – TODO
 
