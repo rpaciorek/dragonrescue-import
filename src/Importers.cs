@@ -123,6 +123,9 @@ class Importers {
             if (skipStables && userItem.Item.AssetName.Length >= 12 && userItem.Item.AssetName.Substring(0,12) == "DragonStable")
                 continue;
             
+            if (userItem.Quantity < 1)
+                continue;
+            
             if (userItem.ItemTier != null && userItem.ItemStats != null) {
                 battleInventoryChanges.Add(
                     new BattleItemTierMap{
