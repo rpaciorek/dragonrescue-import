@@ -48,18 +48,27 @@ class Exporters {
             Console.WriteLine("Error while exporting hideout / farms ... do your emu have hideout / farms support?");
         }
         
-        for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
-            Console.WriteLine(string.Format("Fetching image slot {0} ...", i));
-            string imageData = await ImageApi.GetImageData(client, apiToken, i);
-            ImageData imageDataObject = XmlUtil.DeserializeXml<ImageData>(imageData);
-            if (imageDataObject is null || string.IsNullOrWhiteSpace(imageDataObject.ImageURL)) break;
-            //FileUtil.WriteToChildFile(path, profile.ID, String.Format("{0}-{1}", i, "GetImageData.xml"), imageData);
-
-            // now get the image itself
-            Console.WriteLine(string.Format("Downloading image {0} ...", i));
-            string imageUrl = imageDataObject.ImageURL;
-            string filename = $"{profile.ID}_EggColor_{i}.jpg";
-            FileUtil.DownloadFile(path, filename, imageUrl);
+        string[] imgTypes;
+        if (Config.APIKEY == "1552008f-4a95-46f5-80e2-58574da65875"){
+            imgTypes = new string[]{"EggColor", "Mythie"};
+        } else {
+            imgTypes = new string[]{"EggColor"};
+        }
+        var petsObj = XmlUtil.DeserializeXml<RaisedPetData[]>(pets);
+        foreach (var pet in petsObj) {
+            Console.WriteLine(string.Format("Fetching images for {0} ...", pet.Name));
+            foreach (var type in imgTypes) {
+                try {
+                    Console.WriteLine(string.Format("Get image {0}/{1} ...", type, pet.ImagePosition));
+                    ImageData imageDataObject = XmlUtil.DeserializeXml<ImageData>( await ImageApi.GetImageData(client, apiToken, (int)(pet.ImagePosition), type) );
+                    string imageUrl = imageDataObject.ImageURL;
+                    string filename = $"{profile.ID}_{type}_{pet.ImagePosition}.jpg";
+                    Console.WriteLine(string.Format("Downloading image {0} ...", imageUrl));
+                    FileUtil.DownloadFile(path, filename, imageUrl);
+                } catch {
+                    Console.WriteLine("Error ...");
+                }
+            }
         }
     }
 }

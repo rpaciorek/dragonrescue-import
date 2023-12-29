@@ -24,11 +24,11 @@ public static class ImageApi {
         return bodyRaw;
     }
     
-    public static async Task<string> GetImageData(HttpClient client, string apiToken, int imageSlot) {
+    public static async Task<string> GetImageData(HttpClient client, string apiToken, int imageSlot, string imageType = "EggColor") {
         var formContent = new FormUrlEncodedContent(new[] {
             new KeyValuePair<string, string>("apiKey", Config.APIKEY),
             new KeyValuePair<string, string>("apiToken", apiToken),
-            new KeyValuePair<string, string>("ImageType", "EggColor"),
+            new KeyValuePair<string, string>("ImageType", imageType),
             new KeyValuePair<string, string>("ImageSlot", imageSlot.ToString()),
         });
 

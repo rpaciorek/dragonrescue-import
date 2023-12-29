@@ -54,6 +54,17 @@ class Program {
                 }
             ) {IsRequired = true}
         );
+        rootCommand.AddGlobalOption(
+            new Option<string>(
+                name: "--apiKey",
+                description: "Api key (if different than default SoD/Win), for example:\n" + 
+                " \"1552008f-4a95-46f5-80e2-58574da65875\" for WoJS\n",
+                parseArgument: result => {
+                    Config.APIKEY = result.Tokens.Single().Value;
+                    return Config.APIKEY;
+                }
+            ) {IsRequired = false}
+        );
         
         var loginData = new LoginApi.Data();
         rootCommand.AddGlobalOption(
@@ -115,8 +126,8 @@ class Program {
                 " * inventory – only viking inventory, stables will be omitting until provide --stables-mode=add option\n" +
                 "   --file option argument is path to GetCommonInventory.xml file from dragonrescue* dump.\n" +
                 "   WARNING: item will be added, not replaced! So repeated use import multiply items quantity.\n" +
-                "   WARNING: this is experimental feature, it can broke your account easily\n" +
-                "   WARNING: importing battle backpack not working correctly\n" +
+                "   WARNING: inventory contains many invisible items (for example affecting quests)\n" +
+                "   WARNING: this can broke your account\n" +
                 " * avatar – only viking avatar data\n" +
                 "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue* dump.\n" +
                 "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n" +
@@ -132,7 +143,7 @@ class Program {
             description: 
                 "Specifies the mode of importing stables / farm rooms - adding new ones or replacing existing ones.\n"+
                 "Note: farm room replace does *not* delete rooms that are not in imported data, only reuse old room when possible.\n"+
-                "Default is auto: replace for --mode=stable or --mode=farm, add for --mode=dragons\n",
+                "Default is auto: \"replace\" for --mode=stable or --mode=farm, \"add\" for --mode=dragons\n",
             getDefaultValue: () => ImportRoomModes.auto
         );
 
