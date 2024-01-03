@@ -172,7 +172,6 @@ class Program {
         };
         importCommand.SetHandler(
             async (mode, roomMode, path, importName, skipInventory, skipAvatarXP) => {
-                Importers.WriteLog = Console.WriteLine;
                 switch (mode) {
                     case ImportModes.dragons:
                         await Importers.ImportDragons(loginData, path, (roomMode == ImportRoomModes.replace));
@@ -220,7 +219,6 @@ class Program {
         };
         exportCommand.SetHandler(
             async (path) => {
-                Exporters.WriteLog = Console.WriteLine;
                 await Exporters.Export(loginData, path);
             },
             outDir

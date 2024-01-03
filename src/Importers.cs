@@ -7,7 +7,7 @@ using dragonrescue.Schema;
 namespace dragonrescue;
 class Importers {
     public delegate void WriteDelegate(string msg, params object[] args);
-    public static WriteDelegate WriteLog = null;
+    public static WriteDelegate WriteLog = Console.WriteLine;
     
     public static string apiToken = null;
     private static HttpClient client;

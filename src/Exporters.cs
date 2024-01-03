@@ -6,7 +6,7 @@ using dragonrescue.Schema;
 namespace dragonrescue;
 class Exporters {
     public delegate void WriteDelegate(string msg, params object[] args);
-    public static WriteDelegate WriteLog = null;
+    public static WriteDelegate WriteLog = Console.WriteLine;
     
     public static async System.Threading.Tasks.Task Export(LoginApi.Data loginData, string path) {
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
