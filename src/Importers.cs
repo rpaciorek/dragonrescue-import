@@ -13,13 +13,23 @@ class Importers {
     private static HttpClient client;
     private static UserProfileData profile;
     
+    private static string fallbackUID;
+    private static string GetUID(string uid) {
+        if (uid != "00000000-0000-0000-0000-000000000000")
+            return uid;
+        return fallbackUID;
+    }
+    
     public static async System.Threading.Tasks.Task ImportDragons(LoginApi.Data loginData, string path, bool replaceStables = false) {
         // read dragon XML
         XmlDocument dragonsXml = new XmlDocument();
         dragonsXml.PreserveWhitespace = true;
         dragonsXml.Load(path);
         
-        string basePath = Path.GetDirectoryName(path) + "/" + dragonsXml["ArrayOfRaisedPetData"]["RaisedPetData"]["uid"].InnerText;
+        // get fallbackUID from filename
+        fallbackUID = Path.GetFileName(path).Substring(0, 36);
+        // and set basePath using uid from xml or (if zero) from filename
+        string basePath = Path.GetDirectoryName(path) + "/" + GetUID(dragonsXml["ArrayOfRaisedPetData"]["RaisedPetData"]["uid"].InnerText);
         
         // read stables XML
         XmlDocument stablesXml = new XmlDocument();
@@ -61,7 +71,7 @@ class Importers {
             for (int i = 0; i < dragonsXml.ChildNodes[j].ChildNodes.Count; i++) {
                 var raisedPetData = dragonsXml.ChildNodes[j].ChildNodes[i];
                 if (raisedPetData.HasChildNodes && raisedPetData.Name == "RaisedPetData") {
-                    var vikingUID = raisedPetData["uid"].InnerText;
+                    var vikingUID = GetUID(raisedPetData["uid"].InnerText);
                     var dragonID  = raisedPetData["id"].InnerText;
                     var dragonEID = raisedPetData["eid"].InnerText;
                     var dragonIP  = raisedPetData["ip"].InnerText;
