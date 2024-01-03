@@ -9,6 +9,7 @@ using dragonrescue.Schema;
 using System.CommandLine;
 using System.Reflection;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 class Program {
     enum ImportModes {
@@ -37,7 +38,7 @@ class Program {
                 " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
                 " \"http://localhost:5321\" for local hosted Project Edge (with default settings)",
                 parseArgument: result => {
-                    Config.URL_USER_API = result.Tokens.Single().Value;
+                    Config.URL_USER_API = Regex.Replace(result.Tokens.Single().Value, "/*$", "");
                     return Config.URL_USER_API;
                 }
             ) {IsRequired = true}
@@ -49,7 +50,7 @@ class Program {
                 " \"http://localhost:5000\" for local hosted SoDOff (with default settings)\n" + 
                 " \"http://localhost:5320\" for local hosted Project Edge (with default settings)",
                 parseArgument: result => {
-                    Config.URL_CONT_API = result.Tokens.Single().Value;
+                    Config.URL_CONT_API = Regex.Replace(result.Tokens.Single().Value, "/*$", "");
                     return Config.URL_CONT_API;
                 }
             ) {IsRequired = true}
