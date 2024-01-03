@@ -5,47 +5,50 @@ using dragonrescue.Schema;
 
 namespace dragonrescue;
 class Exporters {
+    public delegate void WriteDelegate(string msg, params object[] args);
+    public static WriteDelegate WriteLog = null;
+    
     public static async System.Threading.Tasks.Task Export(LoginApi.Data loginData, string path) {
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
-        Console.WriteLine("Fetching dragons ...");
+        WriteLog("Fetching dragons ...");
         var pets = await DragonApi.GetAllActivePetsByuserId(client, apiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
 
-        Console.WriteLine("Fetching dragons achievements ...");
+        WriteLog("Fetching dragons achievements ...");
         var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
         
-        Console.WriteLine("Fetching dragons stables ...");
+        WriteLog("Fetching dragons stables ...");
         var dragonsStables = await StablesApi.GetStables(client, apiToken);
         FileUtil.WriteToChildFile(path, profile.ID, "Stables.xml", dragonsStables);
         
-        Console.WriteLine("Write viking avatar ...");
+        WriteLog("Write viking avatar ...");
         FileUtil.WriteToChildFile(path, profile.ID, "VikingProfileData.xml", XmlUtil.SerializeXml(profile)); // viking XP is saved here
        
-        Console.WriteLine("Fetching inventory ...");
+        WriteLog("Fetching inventory ...");
         string childInventory = await InventoryApi.GetCommonInventory(client, apiToken);
         FileUtil.WriteToChildFile(path, profile.ID, "GetCommonInventory.xml", childInventory);
         
         try {
-            Console.WriteLine("Fetching item positions for hideout ...");
+            WriteLog("Fetching item positions for hideout ...");
             string itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT");
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserItemPositions_MyRoomINT.xml", itemPositions);
             
-            Console.WriteLine("Fetching rooms (farms) ...");
+            WriteLog("Fetching rooms (farms) ...");
             string rooms = await RoomApi.GetUserRoomList(client, apiToken, profile.ID);
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserRoomList.xml", rooms);
 
             UserRoomResponse roomsObject = XmlUtil.DeserializeXml<UserRoomResponse>(rooms);
             foreach (UserRoom room in roomsObject.UserRoomList) {
                 if (room.RoomID is null) continue;
-                Console.WriteLine("Fetching item positions for room {0} ...", room.RoomID);
+                WriteLog("Fetching item positions for room {0} ...", room.RoomID);
                 itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, room.RoomID);
                 FileUtil.WriteToChildFile(path, profile.ID, String.Format("GetUserItemPositions_{0}.xml", room.RoomID), itemPositions);
             }
             
         } catch {
-            Console.WriteLine("Error while exporting hideout / farms ... do your emu have hideout / farms support?");
+            WriteLog("Error while exporting hideout / farms ... do your emu have hideout / farms support?");
         }
         
         string[] imgTypes;
@@ -56,17 +59,17 @@ class Exporters {
         }
         var petsObj = XmlUtil.DeserializeXml<RaisedPetData[]>(pets);
         foreach (var pet in petsObj) {
-            Console.WriteLine(string.Format("Fetching images for {0} ...", pet.Name));
+            WriteLog(string.Format("Fetching images for {0} ...", pet.Name));
             foreach (var type in imgTypes) {
                 try {
-                    Console.WriteLine(string.Format("Get image {0}/{1} ...", type, pet.ImagePosition));
+                    WriteLog(string.Format("Get image {0}/{1} ...", type, pet.ImagePosition));
                     ImageData imageDataObject = XmlUtil.DeserializeXml<ImageData>( await ImageApi.GetImageData(client, apiToken, (int)(pet.ImagePosition), type) );
                     string imageUrl = imageDataObject.ImageURL;
                     string filename = $"{profile.ID}_{type}_{pet.ImagePosition}.jpg";
-                    Console.WriteLine(string.Format("Downloading image {0} ...", imageUrl));
+                    WriteLog(string.Format("Downloading image {0} ...", imageUrl));
                     FileUtil.DownloadFile(path, filename, imageUrl);
                 } catch {
-                    Console.WriteLine("Error ...");
+                    WriteLog("Error ...");
                 }
             }
         }
