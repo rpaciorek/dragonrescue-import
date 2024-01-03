@@ -59,7 +59,8 @@ class Program {
             new Option<string>(
                 name: "--apiKey",
                 description: "Api key (if different than default SoD/Win), for example:\n" + 
-                " \"1552008f-4a95-46f5-80e2-58574da65875\" for WoJS\n",
+                " \"1552008f-4a95-46f5-80e2-58574da65875\" for WoJS\n" +
+                " \"6738196d-2a2c-4ef8-9b6e-1252c6ec7325\" for MB\n",
                 parseArgument: result => {
                     Config.APIKEY = result.Tokens.Single().Value;
                     return Config.APIKEY;
@@ -225,6 +226,30 @@ class Program {
         );
         rootCommand.AddCommand(exportCommand);
 
+        // tools command
+        var toolsCommand = new Command("tools", "Misc SoD/JS API tools");
+        rootCommand.AddCommand(toolsCommand);
+        
+        var selectDragonCommand = new Command("selectDragon", "set dragon as selected/active");
+        var selectDragonArgument = new Argument<int>(
+            name: "dragonID",
+            description: "ID (not eid / uuid) of dragon to set as selected/active"
+        );
+        var selectDragonPetTypeArgument = new Argument<int>(
+            name: "petTypeID",
+            description: "pet type id of dragon to set as selected/active",
+            getDefaultValue: () => 0
+        );
+        selectDragonCommand.Add(selectDragonArgument);
+        selectDragonCommand.Add(selectDragonPetTypeArgument);
+        selectDragonCommand.SetHandler(
+            async (selectDragonID, petTypeID) => {
+                await Tools.SelectDragon(loginData, selectDragonID, petTypeID);
+            },
+            selectDragonArgument, selectDragonPetTypeArgument
+        );
+        toolsCommand.AddCommand(selectDragonCommand);
+        
         return await rootCommand.InvokeAsync(args);
     }
 }
