@@ -89,12 +89,12 @@ public static class RoomApi {
         }
         
         if (addToInventory) {
-            Console.WriteLine("Update inventory ...");
+            Config.LogWriter("Update inventory ...");
             string res = await InventoryApi.AddItems(client, apiToken, inventoryChanges);
             Thread.Sleep(Config.NICE);
         }
         
-        Console.WriteLine(string.Format("Update room {0} ...", roomId));
+        Config.LogWriter(string.Format("Update room {0} ...", roomId));
         var formContent = new FormUrlEncodedContent(new[] {
             new KeyValuePair<string, string>("apiToken", apiToken),
             new KeyValuePair<string, string>("apiKey", Config.APIKEY),

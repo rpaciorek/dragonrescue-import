@@ -29,7 +29,6 @@ public static class FileUtil {
 
     public static void DownloadFile(string path, string name, string downloadUrl) {
         string fullPath = Path.Join(path, name);
-        Console.WriteLine(fullPath);
         var webClient = new WebClient();
         webClient.DownloadFile(downloadUrl, fullPath);
     }

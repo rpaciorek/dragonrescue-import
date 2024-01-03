@@ -156,7 +156,7 @@ public static class StablesApi {
             if (resXML["CIRS"]["s"].InnerText != "true")
                 throw new Exception();
         } catch {
-            Console.WriteLine("Error while adding stable items to inventory");
+            Config.LogWriter("Error while adding stable items to inventory");
         }
         
         return bodyRaw;

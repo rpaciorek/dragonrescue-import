@@ -74,27 +74,27 @@ public static class LoginApi {
     
     
     public static async Task<(HttpClient, string, UserProfileData)> DoVikingLogin(string username, string password, string viking) {
-        Console.WriteLine(string.Format("Logging into School of Dragons (userApiUrl={2}, contentApiUrl={3}) as '{0}' with password '{1}'...", username, password, Config.URL_USER_API, Config.URL_CONT_API));
+        Config.LogWriter(string.Format("Logging into School of Dragons (userApiUrl={2}, contentApiUrl={3}) as '{0}' with password '{1}'...", username, password, Config.URL_USER_API, Config.URL_CONT_API));
         
         HttpClient client = new HttpClient();
         string loginInfo = await LoginApi.LoginParent(client, username, password);
 
         ParentLoginInfo loginInfoObject = XmlUtil.DeserializeXml<ParentLoginInfo>(loginInfo);
         if (loginInfoObject.Status != MembershipUserStatus.Success) {
-            Console.WriteLine("Login error. Please check username and password.");
+            Config.LogWriter("Login error. Please check username and password.");
         } else {
-            Console.WriteLine("Fetching child profiles...");
+            Config.LogWriter("Fetching child profiles...");
             string children = await LoginApi.GetDetailedChildList(client, loginInfoObject.ApiToken);
             UserProfileDataList childrenObject = XmlUtil.DeserializeXml<UserProfileDataList>(children);
-            Console.WriteLine(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
+            Config.LogWriter(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
 
             foreach (UserProfileData profile in childrenObject.UserProfiles) {
                 if (viking != profile.AvatarInfo.UserInfo.Username) { // always is the same as profile.AvatarInfo.AvatarData.DisplayName and (for SoDOff only) profile.AvatarInfo.UserInfo.FirstName ???
-                    Console.WriteLine(string.Format("Skip child profile: {0}.", profile.AvatarInfo.UserInfo.Username));
+                    Config.LogWriter(string.Format("Skip child profile: {0}.", profile.AvatarInfo.UserInfo.Username));
                     continue;
                 }
                 
-                Console.WriteLine(string.Format("Selecting profile {0} ({1})...", profile.AvatarInfo.UserInfo.Username, profile.ID));
+                Config.LogWriter(string.Format("Selecting profile {0} ({1})...", profile.AvatarInfo.UserInfo.Username, profile.ID));
                 var childApiToken = await LoginApi.LoginChild(client, loginInfoObject.ApiToken, profile.ID);
                 
                 return (client, childApiToken, profile);
