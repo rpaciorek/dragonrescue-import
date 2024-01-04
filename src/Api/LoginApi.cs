@@ -82,10 +82,15 @@ public static class LoginApi {
         ParentLoginInfo loginInfoObject = XmlUtil.DeserializeXml<ParentLoginInfo>(loginInfo);
         if (loginInfoObject.Status != MembershipUserStatus.Success) {
             Config.LogWriter("Login error. Please check username and password.");
+            throw new InvalidOperationException("Login error");
         } else {
             Config.LogWriter("Fetching child profiles...");
             string children = await LoginApi.GetDetailedChildList(client, loginInfoObject.ApiToken);
             UserProfileDataList childrenObject = XmlUtil.DeserializeXml<UserProfileDataList>(children);
+            if (childrenObject is null) {
+                Config.LogWriter("Found 0 child profiles.");
+                throw new InvalidOperationException("No vikings found");
+            }
             Config.LogWriter(string.Format("Found {0} child profiles.", childrenObject.UserProfiles.Length));
 
             foreach (UserProfileData profile in childrenObject.UserProfiles) {
@@ -101,8 +106,7 @@ public static class LoginApi {
             }
         }
 
-        Environment.Exit(1);
-        throw new Exception(); 
+        throw new InvalidOperationException("Can't login into viking");
     }
     
     public static async Task<(HttpClient, string, UserProfileData)> DoVikingLogin(Data loginData) {
