@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="using:dragonrescuegui.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400
+			 " d:DesignHeight="640"
+             x:Class="dragonrescuegui.Views.ExportImportView"
+			 x:DataType="vm:ExportImportViewModel">
+	<StackPanel Margin="10">
+		<TextBlock Text="{Binding ModeText}" Margin="0,0,0,10"/>
+		<TextBlock Text="User API URL:"/>
+		<TextBox Name="UserApiUrlTextBox" Width="300" Margin="0,0,0,10" Text="{Binding UserApiUrl}" />
+
+		<TextBlock Text="Content API URL:"/>
+		<TextBox Name="ContentApiUrlTextBox" Width="300" Margin="0,0,0,10" Text="{Binding ContentApiUrl}"/>
+
+		<TextBlock Text="Username:"/>
+		<TextBox Name="UsernameTextBox" Width="300" Margin="0,0,0,10" Text="{Binding Username}"/>
+
+		<TextBlock Text="Password:"/>
+		<TextBox PasswordChar="●" Name="PasswordBox" Width="300" Margin="0,0,0,10" Text="{Binding Password}"/>
+
+		<TextBlock Text="Viking name:"/>
+		<TextBox Name="VikingNameTextBox" Width="300" Margin="0,0,0,10" Text="{Binding VikingName}"/>
+
+		<StackPanel Name="ImportModeRadioGroup" IsVisible="{Binding IsImportMode}">
+			<TextBlock Text="Import mode:"/>
+			<UniformGrid Margin="0,0,0,-30">
+				<RadioButton Content="Dragons" IsChecked="{Binding IsDragonsSelected}" />
+				<RadioButton Content="Inventory" IsChecked="{Binding IsInventorySelected}"/>
+				<RadioButton Content="Hideout" IsChecked="{Binding IsHideoutSelected}" />
+				<RadioButton Content="Avatar" IsChecked="{Binding IsAvatarSelected}"/>
+				<RadioButton Content="Farms" IsChecked="{Binding IsFarmsSelected}" />
+			</UniformGrid>
+		</StackPanel>
+		
+		<StackPanel Margin="0,10,0,10">
+			<Label Content="{Binding SelectText}"/>
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Name="FolderPathTextBlock" Text="{Binding Path, Mode=TwoWay}" VerticalAlignment="Center" MaxWidth="300" TextWrapping="Wrap"/>
+				<Button Name="SelectFolderButton" Content="Browse" Width="80" Command="{Binding SelectFolderClick}" CommandParameter="{Binding $parent[Window]}" />
+			</StackPanel>
+		</StackPanel>
+		<ProgressBar Name="ProgressBar" Width="300" Margin="0,10,0,10" Value="{Binding ProgressValue}"/>
+		<ScrollViewer Name="scrollViewer" Height="80" Margin="0,0,0,5" HorizontalScrollBarVisibility="Visible">
+			<SelectableTextBlock Text="{Binding Log}" Opacity="0.8" FontSize="10"/>
+		</ScrollViewer>
+		<StackPanel Orientation="Horizontal">
+			<Button Name="OkButton" Content="{Binding ModeText}" Width="65" HorizontalAlignment="Left" IsEnabled="{Binding IsEnabled}" Command="{Binding ExecuteButtonCommand}"/>
+			<TextBlock Margin="10,5,0,0" Text="{Binding WarningText}" Foreground="Red" Opacity="0.7" FontSize="9" MaxWidth="300" TextWrapping="Wrap"/>
+		</StackPanel>
+	</StackPanel>
+</UserControl>

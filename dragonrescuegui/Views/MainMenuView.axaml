@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="using:dragonrescuegui.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="dragonrescuegui.Views.MainMenuView"
+			 x:DataType="vm:MainMenuViewModel">
+	<Grid>
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+			<Button Content="Migrate from Edge" IsEnabled="False"/>
+			<Button Content="Manual Mode" Command="{Binding ManualMode}"/>
+		</StackPanel>
+	</Grid>
+</UserControl>
