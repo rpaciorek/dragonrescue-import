@@ -41,14 +41,14 @@ dotnet build
 
 Use  To build single file executable package use: `dotnet publish --runtime linux-x64` (for 64bit Linux) or `dotnet publish --runtime win-x86` (for 32bit Windows), etc.
 
-### Running
+### Running (command line)
 
 #### import
 
 ```
-bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" \
-                        --username="username" --password="password" --viking="viking_name" \
-                        import --file "PATH_TO_GetAllActivePetsByuserId.xml"
+src/bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" \
+                            --username="username" --password="password" --viking="viking_name" \
+                            import --file "PATH_TO_GetAllActivePetsByuserId.xml"
 ```
 
 **See `./dragonrescue-import import --help` for more options and details.**
@@ -56,9 +56,9 @@ bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API
 #### export
 
 ```
-bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL"\
-                        --username="username" --password="password" --viking="viking_name"\
-                        export --path "export_dir"
+src/bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL"\
+                            --username="username" --password="password" --viking="viking_name"\
+                            export --path "export_dir"
 ```
 
 Where:
@@ -73,3 +73,9 @@ Where:
 * "viking_name" is emu in-game name
 * "PATH_TO_GetAllActivePetsByuserId.xml" is path to GetAllActivePetsByuserId.xml file from dragonrescue dump (e.g.  `../../mydragons/eba07882-0ae8-4965-9c39-07f409a1c415-GetAllActivePetsByuserId.xml`).
   In the directory containing this file there should be dragon pictures exported by dragonrescue.
+
+### Running (GUI)
+
+```
+gui/bin/Debug/net6.0/dragonrescuegui
+```
