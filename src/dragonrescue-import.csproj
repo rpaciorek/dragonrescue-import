@@ -40,8 +40,8 @@
 
   <ItemGroup>
     <!-- include LICENCE and README in build results -->
-    <Content Include="LICENSE"   TargetPath="LICENSE.txt" CopyToOutputDirectory="Always" />
-    <Content Include="README.md" TargetPath="README.md"   CopyToOutputDirectory="Always" />
+    <Content Include="../LICENSE"   TargetPath="LICENSE.txt" CopyToOutputDirectory="Always" />
+    <Content Include="../README.md" TargetPath="README.md"   CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <Target Name="BuildZip" AfterTargets="Publish">
