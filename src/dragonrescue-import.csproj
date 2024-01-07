@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     
     <SourceControlInformationFeatureSupported>true</SourceControlInformationFeatureSupported>
-    <Version>0.5.0</Version>
+    <Version>$([System.IO.File]::ReadAllText("../version.txt").Trim())</Version>
     <InformationalVersion>$(SourceRevisionId)</InformationalVersion>
     
     <OutputPath>$(MSBuildThisFileDirectory)bin</OutputPath>
