@@ -4,37 +4,44 @@ using dragonrescue.Util;
 using dragonrescue.Schema;
 
 namespace dragonrescue;
-class Exporters {
+public class Exporters {
     public static async System.Threading.Tasks.Task Export(LoginApi.Data loginData, string path) {
         (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
         
         Config.LogWriter("Fetching dragons ...");
         var pets = await DragonApi.GetAllActivePetsByuserId(client, apiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
+        Config.ProgressInfo(15);
 
         Config.LogWriter("Fetching dragons achievements ...");
         var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, profile.ID);
         FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
+        Config.ProgressInfo(20);
         
         Config.LogWriter("Fetching dragons stables ...");
         var dragonsStables = await StablesApi.GetStables(client, apiToken);
         FileUtil.WriteToChildFile(path, profile.ID, "Stables.xml", dragonsStables);
+        Config.ProgressInfo(25);
         
         Config.LogWriter("Write viking avatar ...");
         FileUtil.WriteToChildFile(path, profile.ID, "VikingProfileData.xml", XmlUtil.SerializeXml(profile)); // viking XP is saved here
+        Config.ProgressInfo(40);
        
         Config.LogWriter("Fetching inventory ...");
         string childInventory = await InventoryApi.GetCommonInventory(client, apiToken);
         FileUtil.WriteToChildFile(path, profile.ID, "GetCommonInventory.xml", childInventory);
+        Config.ProgressInfo(60);
         
         try {
             Config.LogWriter("Fetching item positions for hideout ...");
             string itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT");
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserItemPositions_MyRoomINT.xml", itemPositions);
+            Config.ProgressInfo(70);
             
             Config.LogWriter("Fetching rooms (farms) ...");
             string rooms = await RoomApi.GetUserRoomList(client, apiToken, profile.ID);
             FileUtil.WriteToChildFile(path, profile.ID, "GetUserRoomList.xml", rooms);
+            Config.ProgressInfo(80);
 
             UserRoomResponse roomsObject = XmlUtil.DeserializeXml<UserRoomResponse>(rooms);
             foreach (UserRoom room in roomsObject.UserRoomList) {
@@ -43,7 +50,7 @@ class Exporters {
                 itemPositions = await RoomApi.GetUserItemPositions(client, apiToken, profile.ID, room.RoomID);
                 FileUtil.WriteToChildFile(path, profile.ID, String.Format("GetUserItemPositions_{0}.xml", room.RoomID), itemPositions);
             }
-            
+            Config.ProgressInfo(90);
         } catch {
             Config.LogWriter("Error while exporting hideout / farms ... do your emu have hideout / farms support?");
         }
@@ -70,5 +77,6 @@ class Exporters {
                 }
             }
         }
+        Config.ProgressInfo(100);
     }
 }

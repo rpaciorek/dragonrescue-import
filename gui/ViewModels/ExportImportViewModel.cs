@@ -1,4 +1,6 @@
-﻿using dragonrescuegui.Models;
+﻿using dragonrescue;
+using dragonrescue.Util;
+using dragonrescuegui.Models;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -177,27 +179,28 @@ namespace dragonrescuegui.ViewModels {
             IProgress<double> progress = new Progress<double>(value => ProgressValue = value);
             progress.Report(0);
             try {
+                Config.ProgressInfo = progress.Report;
                 if (mode == Mode.Export)
-                    await Exporter.Export(data, Path, progress);
+                    await Exporters.Export(data, Path);
                 else if (mode == Mode.Import)
-                    await Import(data, progress);
+                    await Import(data);
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
             }
             Console.WriteLine("Finished");
         }
 
-        private async Task Import(LoginApi.Data data, IProgress<double> progress) {
+        private async Task Import(LoginApi.Data data) {
             if (IsAvatarSelected)
-                await Importer.ImportAvatar(data, Path, data.viking, false, progress);
+                await Importers.ImportAvatar(data, Path, data.viking, false);
             else if (IsDragonsSelected)
-                await Importer.ImportDragons(data, Path, progress);
+                await Importers.ImportDragons(data, Path);
             else if (IsInventorySelected)
-                await Importer.ImportInventory(data, Path, progress);
+                await Importers.ImportInventory(data, Path);
             else if (IsHideoutSelected)
-                await Importer.ImportHideout(data, Path, progress);
+                await Importers.ImportHideout(data, Path);
             else if (IsFarmsSelected)
-                await Importer.ImportFarm(data, _path, progress);
+                await Importers.ImportFarm(data, _path);
         }
 
         public async Task SelectFolderClick(Window window) {

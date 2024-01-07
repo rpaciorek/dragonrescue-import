@@ -5,7 +5,7 @@ using dragonrescue.Util;
 using dragonrescue.Schema;
 
 namespace dragonrescue;
-class Importers {
+public class Importers {
     public static string apiToken = null;
     private static HttpClient client;
     private static UserProfileData profile;
@@ -36,6 +36,7 @@ class Importers {
             stablesXml = null;
             Config.LogWriter("Can't open stables file (this is normal for original SoD data) ... ignoring");
         }
+        Config.ProgressInfo(10);
         
         // read dragon XP
         var dragonsXP = new Dictionary<string, int>();
@@ -53,6 +54,7 @@ class Importers {
             Config.LogWriter("Can't open dragons achievements (xp) file ...");
             return;
         }
+        Config.ProgressInfo(20);
         
         // read dir (for images)
         List<string> inputFiles = new List<string>();
@@ -61,6 +63,7 @@ class Importers {
         // connect to server and login as viking
         if (apiToken is null)
             (client, apiToken, profile) = await LoginApi.DoVikingLogin(loginData);
+        Config.ProgressInfo(30);
         
         // process dragons XML (do import)
         var dragonsIDMap = new Dictionary<string, string>();
@@ -109,11 +112,14 @@ class Importers {
                 }
             }
         }
+        Config.ProgressInfo(90);
+        
         if (stablesXml != null) {
             Config.LogWriter("Importing stables ...");
             var res = await StablesApi.SetStables(client, apiToken, stablesXml, dragonsIDMap, replaceStables);
             Config.LogWriter(res);
         }
+        Config.ProgressInfo(100);
     }
     
     public static async System.Threading.Tasks.Task ImportOnlyStables(LoginApi.Data loginData, string path, bool replaceStables = true) {
@@ -155,6 +161,7 @@ class Importers {
                 inventoryChanges[userItem.ItemID] = userItem.Quantity;
             }
         }
+        Config.ProgressInfo(15);
         
         // connect to server and login as viking
         if (apiToken is null)
@@ -163,10 +170,12 @@ class Importers {
         // new http client due to timeout
         HttpClient client2 = new HttpClient();
         client2.Timeout = TimeSpan.FromMinutes(10);
+        Config.ProgressInfo(30);
         
         // send inventory to server
         Config.LogWriter("Importing inventory ... please be patient ... it may take a while ...");
         var res1 = await InventoryApi.AddItems(client2, apiToken, inventoryChanges);
+        Config.ProgressInfo(70);
         
         XmlDocument res1Xml = new XmlDocument();
         res1Xml.LoadXml(res1);
@@ -174,10 +183,12 @@ class Importers {
         
         Config.LogWriter("Importing battle inventory ... please be patient ... it may take a while ...");
         var res2 = await InventoryApi.AddBattleItems(client2, apiToken, battleInventoryChanges);
+        Config.ProgressInfo(90);
         
         XmlDocument res2Xml = new XmlDocument();
         res2Xml.LoadXml(res2);
         Config.LogWriter(res2Xml["ABIRES"]["ST"].InnerText);
+        Config.ProgressInfo(100);
     }
     
     public static async System.Threading.Tasks.Task ImportHideout(LoginApi.Data loginData, string path, bool addToInventory = true) {
@@ -186,11 +197,13 @@ class Importers {
         // connect to server and login as viking
         if (apiToken is null)
             (client, apiToken, profile) = await LoginApi.DoVikingLogin(loginData);
+        Config.ProgressInfo(15);
         
         // send hideout to server
         Config.LogWriter("Importing hideout ...");
         var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, "MyRoomINT", roomXml, addToInventory);
         Config.LogWriter(res);
+        Config.ProgressInfo(100);
     }
     
     public static async System.Threading.Tasks.Task ImportFarm(LoginApi.Data loginData, string path, bool replaceRooms = true, bool addToInventory = true) {
@@ -200,6 +213,7 @@ class Importers {
         // connect to server and login as viking
         if (apiToken is null)
             (client, apiToken, profile) = await LoginApi.DoVikingLogin(loginData);
+        Config.ProgressInfo(10);
         
         Config.LogWriter("Importing farm ...");
         
@@ -210,6 +224,7 @@ class Importers {
             Config.LogWriter(string.Format("bbbb {0}", x));
             rooms = XmlUtil.DeserializeXml<UserRoomResponse>(x).UserRoomList;
         }
+        Config.ProgressInfo(30);
         
         // for each imported room
         foreach (UserRoom room in roomsList) {
@@ -266,12 +281,14 @@ class Importers {
             var res = await RoomApi.SetUserItemPositions(client, apiToken, profile.ID, newRoomID, System.IO.File.ReadAllText(roomFile), addToInventory);
             Config.LogWriter(res);
         }
+        Config.ProgressInfo(100);
     }
     
     public static async System.Threading.Tasks.Task ImportAvatar(LoginApi.Data loginData, string path, string importName, bool importXP = true) {
         XmlDocument avatarXmlDoc = new XmlDocument();
         avatarXmlDoc.Load(path);
         AvatarDisplayData avatar = null;
+        Config.ProgressInfo(10);
         
         if (avatarXmlDoc["ArrayOfUserProfileDisplayData"] != null) {
             foreach (XmlNode profileData in avatarXmlDoc["ArrayOfUserProfileDisplayData"].ChildNodes) {
@@ -300,11 +317,13 @@ class Importers {
         // connect to server and login as viking
         if (apiToken is null)
             (client, apiToken, profile) = await LoginApi.DoVikingLogin(loginData);
+        Config.ProgressInfo(30);
         
         // send avatar data to server
         Config.LogWriter("Importing viking avatar ...");
         var res = await VikingApi.SetAvatar(client, apiToken, avatar.AvatarData);
         Config.LogWriter(res);
+        Config.ProgressInfo(85);
         
         // send avatar xp to server
         if (importXP) {
@@ -319,5 +338,6 @@ class Importers {
                 }
             }
         }
+        Config.ProgressInfo(100);
     }
 }

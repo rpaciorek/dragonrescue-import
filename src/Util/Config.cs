@@ -9,4 +9,7 @@ public static class Config {
     
     public delegate void WriteDelegate(string msg, params object[] args);
     public static WriteDelegate LogWriter = Console.WriteLine;
+    
+    public delegate void ProgressDelegate(double value);
+    public static ProgressDelegate ProgressInfo = (double value) => {};
 }
