@@ -12,7 +12,6 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
-
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.0.6" />
     <PackageReference Include="Avalonia.Desktop" Version="11.0.6" />
@@ -23,15 +22,20 @@
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.6" />
   </ItemGroup>
 
-
   <ItemGroup>
-    <ProjectReference Include="..\src\dragonrescue-import.csproj" />
+    <ProjectReference Include="..\src\dragonrescue-import.csproj" SkipGetTargetFrameworkProperties="true" />
   </ItemGroup>
-
 
   <ItemGroup>
     <Compile Update="Views\MainMenuView.axaml.cs">
       <DependentUpon>MainMenuView.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
+
+  <Target Name="BuildZip" AfterTargets="Publish">
+    <!-- build zip package -->
+    <Exec WorkingDirectory="$(OutputPath)" Command="rm -fr publish/src ../../dragonrescue-gui--$(RuntimeIdentifier)_$(Version).zip dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="mv publish dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="zip -r $(MSBuildThisFileDirectory)/../dragonrescue-gui--$(RuntimeIdentifier)_$(Version).zip dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
+  </Target>
 </Project>

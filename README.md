@@ -79,3 +79,7 @@ Where:
 ```
 gui/bin/Debug/net6.0/dragonrescuegui
 ```
+
+#### alternative GUI
+
+alternative GUI is available on: https://github.com/B1ackDaemon/dragonrescue-helper

@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     
     <SourceControlInformationFeatureSupported>true</SourceControlInformationFeatureSupported>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <InformationalVersion>$(SourceRevisionId)</InformationalVersion>
     
     <OutputPath>$(MSBuildThisFileDirectory)bin</OutputPath>
@@ -48,6 +48,6 @@
     <!-- build zip package -->
     <Exec WorkingDirectory="$(OutputPath)" Command="rm -fr publish/src ../../dragonrescue-import--$(RuntimeIdentifier)_$(Version).zip dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
     <Exec WorkingDirectory="$(OutputPath)" Command="mv publish dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
-    <Exec WorkingDirectory="$(OutputPath)" Command="zip -r ../../dragonrescue-import--$(RuntimeIdentifier)_$(Version).zip dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="zip -r $(MSBuildThisFileDirectory)/../dragonrescue-import--$(RuntimeIdentifier)_$(Version).zip dragonrescue-import--$(RuntimeIdentifier)_$(Version)" />
   </Target>
 </Project>
