@@ -35,51 +35,63 @@ Use import with caution – in case of bug can broke your current account / viki
 
 ### Build
 
-```
-dotnet build
-```
+* to build command line version, run `dotnet build` in `src` dir 
+* to build GUI version, run `dotnet build` in `gui`
+* to build redistributable packages (gui and commandline version for 64 bit Linux and 32 bit Windows) use `build.sh` script
 
-Use  To build single file executable package use: `dotnet publish --runtime linux-x64` (for 64bit Linux) or `dotnet publish --runtime win-x86` (for 32bit Windows), etc.
+### Running
 
-### Running (command line)
+#### gui
+
+* run `gui/bin/dragonrescuegui`
+* select mode (export or import)
+* fill server data form
+* select output dir (export) or mode and input file (import)
+* click export or import button
+* read messages in text window
+
+#### export
+
+```
+src/bin/dragonrescue-import --userApiUrl="User API URL" --contentApiUrl="Content API URL"\
+                            --username="Username" --password="Password" --viking="Viking name"\
+                            export --path "export_dir"
+```
 
 #### import
 
 ```
-src/bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL" \
-                            --username="username" --password="password" --viking="viking_name" \
+src/bin/dragonrescue-import --userApiUrl="User API URL" --contentApiUrl="Content API URL" \
+                            --username="Username" --password="Password" --viking="Viking name" \
                             import --file "PATH_TO_GetAllActivePetsByuserId.xml"
 ```
 
 **See `./dragonrescue-import import --help` for more options and details.**
 
-#### export
 
-```
-src/bin/dragonrescue-import --userApiUrl="USER_API_URL" --contentApiUrl="CONTENT_API_URL"\
-                            --username="username" --password="password" --viking="viking_name"\
-                            export --path "export_dir"
-```
+#### arguments description
 
-Where:
+In all modes (gui/command line and import/export) you need provide access data for SoD API server:
 
-* "USER_API_URL" is:
+* "User API URL" is:
 	* "http://localhost:5000" for local hosted [Sodoff](https://github.com/Spirtix/sodoff)
 	* "http://localhost:5321" for local hosted [Edge](https://github.com/SkySwimmer/Edge)
-* "CONTENT_API_URL" is:
+* "Content API URL" is:
 	* "http://localhost:5000" for local hosted Sodoff
 	* "http://localhost:5320" for local hosted Edge
-* "username" and "password" are login data for emu account
-* "viking_name" is emu in-game name
-* "PATH_TO_GetAllActivePetsByuserId.xml" is path to GetAllActivePetsByuserId.xml file from dragonrescue dump (e.g.  `../../mydragons/eba07882-0ae8-4965-9c39-07f409a1c415-GetAllActivePetsByuserId.xml`).
-  In the directory containing this file there should be dragon pictures exported by dragonrescue.
+* "Username" and "Password" are login data for emu account
+* "Viking name" is emu in-game name
 
-### Running (GUI)
+Also for import you need provide file path coresponding to selected mode, for import:
 
-```
-gui/bin/Debug/net6.0/dragonrescuegui
-```
+* dragons → "PATH_TO_GetAllActivePetsByuserId.xml" is path to GetAllActivePetsByuserId.xml file from dragonrescue dump (e.g.  `../../mydragons/eba07882-0ae8-4965-9c39-07f409a1c415-GetAllActivePetsByuserId.xml`).
+  The directory containing this file should also contain dragon pictures and some other xml files (like `*GetPetAchievementsByUserID.xml`) exported by dragonrescue.
+* avatar → "...-GetDetailedChildList.xml" or "...-VikingProfileData.xml.xml"
+* farm → "...-GetUserRoomList.xml"
+* hideout → "...-GetUserItemPositions_MyRoomINT.xml"
+* inventory → "...-GetCommonInventory.xml"
 
-#### alternative GUI
 
-alternative GUI is available on: https://github.com/B1ackDaemon/dragonrescue-helper
+## Other tools
+
+* Alternative GUI is available on: https://github.com/B1ackDaemon/dragonrescue-helper

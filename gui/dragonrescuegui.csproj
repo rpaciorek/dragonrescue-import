@@ -4,6 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <Version>$([System.IO.File]::ReadAllText("../version.txt").Trim())</Version>
+    
+    <OutputPath>$(MSBuildThisFileDirectory)bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
@@ -36,6 +42,7 @@
   <Target Name="BuildZip" AfterTargets="Publish">
     <!-- build zip package -->
     <Exec WorkingDirectory="$(OutputPath)" Command="rm -fr publish/src ../../dragonrescue-gui--$(RuntimeIdentifier)_$(Version).zip dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="rm publish/dragonrescue-import*" />
     <Exec WorkingDirectory="$(OutputPath)" Command="mv publish dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
     <Exec WorkingDirectory="$(OutputPath)" Command="zip -r $(MSBuildThisFileDirectory)/../dragonrescue-gui--$(RuntimeIdentifier)_$(Version).zip dragonrescue-gui--$(RuntimeIdentifier)_$(Version)" />
   </Target>
