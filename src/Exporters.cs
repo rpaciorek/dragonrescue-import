@@ -13,10 +13,14 @@ public class Exporters {
         FileUtil.WriteToChildFile(path, profile.ID, "GetAllActivePetsByuserId.xml", pets);
         Config.ProgressInfo(15);
 
-        Config.LogWriter("Fetching dragons achievements ...");
-        var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, profile.ID);
-        FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
-        Config.ProgressInfo(20);
+        try {
+            Config.LogWriter("Fetching dragons achievements ...");
+            var petAchievements = await DragonApi.GetPetAchievementsByUserID(client, apiToken, profile.ID);
+            FileUtil.WriteToChildFile(path, profile.ID, "GetPetAchievementsByUserID.xml", petAchievements);
+            Config.ProgressInfo(20);
+        } catch {
+            Config.LogWriter("Error while exporting dragons achievements");
+        }
         
         Config.LogWriter("Fetching dragons stables ...");
         var dragonsStables = await StablesApi.GetStables(client, apiToken);
