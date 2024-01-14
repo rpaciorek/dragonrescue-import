@@ -127,7 +127,11 @@ namespace dragonrescuegui.ViewModels {
         }
 
         public string Path {
-            get => _path;
+            get {
+                if (_path is null)
+                    return null;
+                return Uri.UnescapeDataString(_path);
+            }
             set {
                 // FIXME: For some reason UpdateUI doesn't update the button status when used here
                 this.RaiseAndSetIfChanged(ref _path, value);
@@ -200,7 +204,7 @@ namespace dragonrescuegui.ViewModels {
             else if (IsHideoutSelected)
                 await Importers.ImportHideout(data, Path);
             else if (IsFarmsSelected)
-                await Importers.ImportFarm(data, _path);
+                await Importers.ImportFarm(data, Path);
         }
 
         public async Task SelectFolderClick(Window window) {
