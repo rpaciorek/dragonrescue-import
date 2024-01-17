@@ -40,7 +40,7 @@ public static class DragonApi {
         return bodyRaw;
     }
 
-    public static async Task<(string, string, string)> CreateDragonFromXML(HttpClient client, string childApiToken, string userID, XmlNode raisedPetData, int? xpValue, string? imageData) {
+    public static async Task<(string, string, string)> CreateDragonFromXML(HttpClient client, string childApiToken, string userID, XmlNode raisedPetData, int? xpValue, string? imageData, bool removeDragonTickets) {
         // create "template" pet - chimeragon ;-)
         
         Thread.Sleep(Config.NICE);
@@ -51,10 +51,12 @@ public static class DragonApi {
         
         // update original dragon
         
-        // avoid locked dragons in Edge
-        for (int i = raisedPetData.ChildNodes.Count - 1; i >= 0; --i) {
-            if (raisedPetData.ChildNodes[i].Name == "at" && raisedPetData.ChildNodes[i]["k"].InnerText == "TicketID") {
-                raisedPetData.RemoveChild(raisedPetData.ChildNodes[i]);
+        // avoid locked dragons
+        if (removeDragonTickets) {
+            for (int i = raisedPetData.ChildNodes.Count - 1; i >= 0; --i) {
+                if (raisedPetData.ChildNodes[i].Name == "at" && raisedPetData.ChildNodes[i]["k"].InnerText == "TicketID") {
+                    raisedPetData.RemoveChild(raisedPetData.ChildNodes[i]);
+                }
             }
         }
         

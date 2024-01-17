@@ -29,7 +29,7 @@ Use import with caution – in case of bug can broke your current account / viki
 	* farm
 		* **Note:** due to the lack some data in original dragonrescue dumps, import farm (in some cases) can be limited only to main (default) farm
 	* inventory
-		* **Warning:** inventory contains many invisible items (for example affecting quests); inventory import can broke your account
+		* **Warning:** inventory contains many invisible items (for example affecting quests or causing dragons duplication); inventory import may broke your account
 
 ## Usage
 

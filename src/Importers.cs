@@ -17,7 +17,7 @@ public class Importers {
         return fallbackUID;
     }
     
-    public static async System.Threading.Tasks.Task ImportDragons(LoginApi.Data loginData, string path, bool replaceStables = false) {
+    public static async System.Threading.Tasks.Task ImportDragons(LoginApi.Data loginData, string path, bool replaceStables = false, bool removeDragonTickets = true) {
         // read dragon XML
         XmlDocument dragonsXml = new XmlDocument();
         dragonsXml.PreserveWhitespace = true;
@@ -93,7 +93,7 @@ public class Importers {
                     
                     // create dragon on server
                     
-                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonXP, imgData);
+                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonXP, imgData, removeDragonTickets);
                     
                     // add to IDs map for update stables XML
                     
@@ -136,13 +136,16 @@ public class Importers {
         Config.LogWriter(res);
     }
     
-    public static async System.Threading.Tasks.Task ImportInventory(LoginApi.Data loginData, string path, bool skipStables = true) {
+    public static async System.Threading.Tasks.Task ImportInventory(LoginApi.Data loginData, string path, bool skipStables = true, bool skipDragonTickets = true) {
         CommonInventoryData inventory = XmlUtil.DeserializeXml<CommonInventoryData>(System.IO.File.ReadAllText(path));
         
         var inventoryChanges = new Dictionary<int, int>();
         var battleInventoryChanges = new List<BattleItemTierMap>();
         foreach (UserItemData userItem in inventory.Item) {
             if (skipStables && userItem.Item.AssetName.Length >= 12 && userItem.Item.AssetName.Substring(0,12) == "DragonStable")
+                continue;
+            
+            if (skipDragonTickets && userItem.Item.Category?.FirstOrDefault(e => e.CategoryId == 454) != null)
                 continue;
             
             if (userItem.Quantity < 1)

@@ -125,11 +125,13 @@ class Program {
                 "   (e.g. '../../mydragons/eba07882-0ae8-4965-9c39-07f409a1c415-GetAllActivePetsByuserId.xml')\n" +
                 " * stables – only stables will be imported – can be used to organise / change order of stables.\n" +
                 "   --file option argument is path to Stables.xml file from dragonrescue-import dump.\n" +
-                " * inventory – only viking inventory, stables will be omitting until provide --stables-mode=add option\n" +
+                " * inventory – only viking inventory,\n" +
+                "   stables will be omitting until provide --stables-mode=add option,\n" +
+                "   dragon tickets will be omitting until provide --dragon-tickets option,\n" +
                 "   --file option argument is path to GetCommonInventory.xml file from dragonrescue* dump.\n" +
                 "   WARNING: item will be added, not replaced! So repeated use import multiply items quantity.\n" +
-                "   WARNING: inventory contains many invisible items (for example affecting quests)\n" +
-                "   WARNING: this can broke your account\n" +
+                "   WARNING: inventory contains many invisible items (for example affecting quests or causing dragons duplication)\n" +
+                "   WARNING: this may broke your account\n" +
                 " * avatar – only viking avatar data\n" +
                 "   --file option argument is path to VikingProfileData.xml or GetDetailedChildList.xml file from dragonrescue* dump.\n" +
                 "   if file contain multiple viking's profiles, then will imported profile with name provided by --import-name\n" +
@@ -159,6 +161,11 @@ class Program {
             description: "Skip importing avatar XP (used with --mode=avatar)."
         );
         
+        var dragonTickets = new Option<bool>(
+            name: "--dragon-tickets",
+            description: "Import dragon tickets, can be use in inventory and dragons mode."
+        );
+        
         var skipInventory = new Option<bool>(
             name: "--skip-inventory",
             description: "Skip inventory update on hideout and farm import."
@@ -170,18 +177,19 @@ class Program {
             importRoomMode,
             importName,
             skipInventory,
+            dragonTickets,
         };
         importCommand.SetHandler(
-            async (mode, roomMode, path, importName, skipInventory, skipAvatarXP) => {
+            async (mode, roomMode, path, importName, skipInventory, skipAvatarXP, dragonTickets) => {
                 switch (mode) {
                     case ImportModes.dragons:
-                        await Importers.ImportDragons(loginData, path, (roomMode == ImportRoomModes.replace));
+                        await Importers.ImportDragons(loginData, path, (roomMode == ImportRoomModes.replace), !dragonTickets);
                         break;
                     case ImportModes.stables:
                         await Importers.ImportOnlyStables(loginData, path, (roomMode == ImportRoomModes.auto || roomMode == ImportRoomModes.replace));
                         break;
                     case ImportModes.inventory:
-                        await Importers.ImportInventory(loginData, path, (roomMode != ImportRoomModes.add));
+                        await Importers.ImportInventory(loginData, path, (roomMode != ImportRoomModes.add), !dragonTickets);
                         break;
                     case ImportModes.avatar:
                         if (importName == null)
@@ -196,7 +204,7 @@ class Program {
                         break;
                 }
             },
-            importMode, importRoomMode, inputFile, importName, skipInventory, skipAvatarXP
+            importMode, importRoomMode, inputFile, importName, skipInventory, skipAvatarXP, dragonTickets
         );
         rootCommand.AddCommand(importCommand);
         
