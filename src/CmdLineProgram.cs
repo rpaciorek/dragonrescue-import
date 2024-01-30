@@ -258,6 +258,35 @@ class Program {
         );
         toolsCommand.AddCommand(selectDragonCommand);
         
+        var replaceDragonCommand = new Command("replaceDragon", "replace XML and images of current pet\n" +
+            "WARNING: This may broke your account. Use at own risk!\n" +
+            "WARNING: Your current dragon will be destroyed!\n"
+        );
+        var replaceDragonArgument = new Argument<string>(
+            name: "xmlFile",
+            description: "Path to xml file. Root node should be <RaisedPetData>"
+        );
+        var replaceDragonImg1Argument = new Argument<string>(
+            name: "EggColor",
+            description: "Path to EggColor image file",
+            getDefaultValue: () => "-"
+        );
+        var replaceDragonImg2Argument = new Argument<string>(
+            name: "Mythie",
+            description: "Path to Mythie image file",
+            getDefaultValue: () => "-"
+        );
+        replaceDragonCommand.Add(replaceDragonArgument);
+        replaceDragonCommand.Add(replaceDragonImg1Argument);
+        replaceDragonCommand.Add(replaceDragonImg2Argument);
+        replaceDragonCommand.SetHandler(
+            async (replaceDragonID, img1, img2) => {
+                await Tools.ReplaceDragon(loginData, replaceDragonID, img1, img2);
+            },
+            replaceDragonArgument, replaceDragonImg1Argument, replaceDragonImg2Argument
+        );
+        toolsCommand.AddCommand(replaceDragonCommand);
+        
         return await rootCommand.InvokeAsync(args);
     }
 }

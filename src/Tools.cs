@@ -1,4 +1,5 @@
 using System.Net;
+using System.Xml;
 using dragonrescue.Api;
 using dragonrescue.Util;
 using dragonrescue.Schema;
@@ -34,5 +35,53 @@ class Tools {
         });
         bodyRaw = await client.PostAndGetReplayOrThrow(Config.URL_CONT_API + "/ContentWebService.asmx/SetKeyValuePair", formContent);
         Config.LogWriter(string.Format("Set {0} to {1}: {2}", keyName, petTypeID, bodyRaw));
+    }
+    
+    public static async System.Threading.Tasks.Task ReplaceDragon(LoginApi.Data loginData, string path, string img1File = "-", string img2File = "-") {
+        XmlDocument dragon = new XmlDocument();
+        dragon.PreserveWhitespace = true;
+        dragon.Load(path);
+        
+        (var client, var apiToken, var profile) = await LoginApi.DoVikingLogin(loginData);
+        
+        // get current pet
+        var oldPetStr = await client.PostAndGetReplayOrThrow(
+            Config.URL_CONT_API + "/ContentWebService.asmx/GetSelectedRaisedPet",
+            new FormUrlEncodedContent(new[] {
+                new KeyValuePair<string, string>("apiKey", Config.APIKEY),
+                new KeyValuePair<string, string>("apiToken", apiToken),
+            })
+        );
+        Config.LogWriter($"Pet {oldPetStr} will be replaced");
+        var oldPet = XmlUtil.DeserializeXml<RaisedPetData[]>(oldPetStr);
+        
+        // update input xml
+        dragon["RaisedPetData"]["uid"].InnerText = oldPet[0].UserID.ToString();
+        dragon["RaisedPetData"]["eid"].InnerText = oldPet[0].EntityID.ToString();
+        dragon["RaisedPetData"]["id"].InnerText  = oldPet[0].RaisedPetID.ToString();
+        dragon["RaisedPetData"]["ip"].InnerText  = oldPet[0].ImagePosition.ToString();
+        
+        // update xml on server
+        var setRaisedPetRequest = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <RPR xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> <ptid>0</ptid> <rpd> " + dragon["RaisedPetData"].InnerXml + " </rpd> </RPR>";
+        
+        string res = await DragonApi.SetRaisedPet(client, apiToken, setRaisedPetRequest);
+        Config.LogWriter($"Replace pet xml: {res}");
+        
+        // update images
+        if (oldPet[0].ImagePosition != null) {
+            int imagePosition = (int)(oldPet[0].ImagePosition);
+            
+            if (img1File != "-" && File.Exists(img1File)) {
+                string imgData = Convert.ToBase64String(System.IO.File.ReadAllBytes(img1File));
+                res = await ImageApi.SetImage(client, apiToken, imagePosition, imgData, "EggColor");
+                Config.LogWriter($"Replace pet EggColor (imagePosition={imagePosition}): {res}");
+            }
+            
+            if (img2File != "-" && File.Exists(img1File)) {
+                string imgData = Convert.ToBase64String(System.IO.File.ReadAllBytes(img2File));
+                res = await ImageApi.SetImage(client, apiToken, imagePosition, imgData, "Mythie");
+                Config.LogWriter($"Replace pet Mythie (imagePosition={imagePosition}): {res}");
+            }
+        }
     }
 }
