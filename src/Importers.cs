@@ -84,6 +84,12 @@ public class Importers {
                         imgData = Convert.ToBase64String(System.IO.File.ReadAllBytes(imgFile));
                     }
                     
+                    string? img2Data = null;
+                    imgFile = inputFiles.Find(x => x.EndsWith($"{vikingUID}_Mythie_{dragonIP}.jpg"));
+                    if (imgFile is not null) {
+                        img2Data = Convert.ToBase64String(System.IO.File.ReadAllBytes(imgFile));
+                    }
+                    
                     // get XP
                     
                     int? dragonXP = null;
@@ -93,7 +99,7 @@ public class Importers {
                     
                     // create dragon on server
                     
-                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonXP, imgData, removeDragonTickets);
+                    (var res1, var res2, var res3) = await DragonApi.CreateDragonFromXML(client, apiToken, profile.ID, raisedPetData, dragonXP, imgData, img2Data, removeDragonTickets);
                     
                     // add to IDs map for update stables XML
                     
